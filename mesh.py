@@ -94,13 +94,12 @@ class Mesh:
                         pEdges))))
 
                 if pEdges and pFaces:
-                    print F,R
                     little_x = (F[0] + 2*R[0] + (len(pEdges)-3)*self.vertices[i][0])/float(len(pEdges))
                     little_y = (F[1] + 2*R[1] + (len(pEdges)-3)*self.vertices[i][1])/float(len(pEdges))
 
                     new_vertices[i] = (little_x,little_y)
 
-            self.vertices = new_vertices
+            self.vertices = new_vertices[:]
             print "vertices", self.vertices
 
             newTriangles = []
@@ -113,63 +112,66 @@ class Mesh:
                 i1 = index
                 index = index+1
 
-                p2 = edgepoints[frozenset((face[0],face[1]))]
-                self.vertices.append(p2) #index update
-                i2 = index
-                index = index+1
+                if frozenset((face[0],face[1])) in edgepoints.keys():
+                    p2 = edgepoints[frozenset((face[0],face[1]))]
+                    self.vertices.append(p2) #index update
+                    i2 = index
+                    index = index+1
 
-                p3 = self.vertices[face[0]]
-                i3 = face[0]
-                
-                newTriangles.append((i1,i2,i3))
-                ##
+                    p3 = self.vertices[face[0]]
+                    i3 = face[0]
+                    
+                    newTriangles.append((i1,i2,i3))
+                    ##
 
-                p3 = self.vertices[face[1]]
-                i3 = face[1]
+                    p3 = self.vertices[face[1]]
+                    i3 = face[1]
                 
-                newTriangles.append((i1,i2,i3))
-                ####
+                    newTriangles.append((i1,i2,i3))
+                    ####
 
-                p2 = edgepoints[frozenset((face[1],face[2]))]
-                self.vertices.append(p2) #index update
-                i2 = index
-                index = index+1
+                if frozenset((face[1],face[2])) in edgepoints.keys():
+                    p2 = edgepoints[frozenset((face[1],face[2]))]
+                    self.vertices.append(p2) #index update
+                    i2 = index
+                    index = index+1
 
-                p3 = self.vertices[face[1]]
-                i3 = face[1]
-                
-                newTriangles.append((i1,i2,i3))
-                ##
+                    p3 = self.vertices[face[1]]
+                    i3 = face[1]
+                    
+                    newTriangles.append((i1,i2,i3))
+                    ##
 
-                p3 = self.vertices[face[2]]
-                i3 = face[2]
+                    p3 = self.vertices[face[2]]
+                    i3 = face[2]
+                    
+                    newTriangles.append((i1,i2,i3))
+                    ####
                 
-                newTriangles.append((i1,i2,i3))
-                ####
-                
-                p2 = edgepoints[frozenset((face[2],face[0]))]
-                self.vertices.append(p2) #index update
-                i2 = index
-                index = index+1
+                if frozenset((face[2],face[0])) in edgepoints.keys():
+                    p2 = edgepoints[frozenset((face[2],face[0]))]
+                    self.vertices.append(p2) #index update
+                    i2 = index
+                    index = index+1
 
-                p3 = self.vertices[face[2]]
-                i3 = face[2]
-                
-                newTriangles.append((i1,i2,i3))
-                ##
+                    p3 = self.vertices[face[2]]
+                    i3 = face[2]
+                    
+                    newTriangles.append((i1,i2,i3))
+                    ##
 
-                p3 = self.vertices[face[0]]
-                i3 = face[0]
-                
-                newTriangles.append((i1,i2,i3))
-                ##
+                    p3 = self.vertices[face[0]]
+                    i3 = face[0]
+                    
+                    newTriangles.append((i1,i2,i3))
+                    ##
 
             self.triangles = newTriangles
 
 
 
 myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)])
-myMesh.submesh(1)
+myMesh.submesh(2)
 
 import numpy as np
 import matplotlib.pyplot as plt
