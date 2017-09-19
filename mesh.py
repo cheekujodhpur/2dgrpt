@@ -1,4 +1,5 @@
 
+from helper import triangulateQuad
 
 # Defining the Mesh
 class Mesh:
@@ -15,5 +16,6 @@ class Mesh:
         Needs:
         corners : list of four 2-tuples which describe the corners of the mesh
         """
-        self.vertices = self.vertices + corners
-        self.trianges = []
+        triangles, newCorners = triangulateQuad(corners)
+        self.vertices = self.vertices + newCorners
+        self.triangles = self.triangles + triangles
