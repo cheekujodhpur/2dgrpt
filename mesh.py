@@ -41,7 +41,7 @@ class Mesh:
         for nn in range(n):
             newTriangles = []
             for triangle in self.triangles:
-                center = tuple(map(lambda x:float(x)/len(self.vertices),\
+                center = tuple(map(lambda x:float(x)/3,\
                         reduce(lambda x,y:(x[0]+y[0],x[1]+y[1]),\
                         map(lambda x:self.vertices[x],triangle))))
 
@@ -57,7 +57,7 @@ class Mesh:
 
 
 myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)])
-myMesh.submesh(2)
+myMesh.submesh(4)
 
 import numpy as np
 import matplotlib.pyplot as plt
