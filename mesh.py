@@ -34,30 +34,32 @@ class Mesh:
     def submesh(self,n=1):
         """
         Create one level of submesh
-        Catmull-Clark Subdivision Surface
         """
-        #TODO: Make it Catmull-Clark; naive right now
         index = len(self.vertices)
+
         for nn in range(n):
             newTriangles = []
             for triangle in self.triangles:
-                center = tuple(map(lambda x:float(x)/3,\
-                        reduce(lambda x,y:(x[0]+y[0],x[1]+y[1]),\
-                        map(lambda x:self.vertices[x],triangle))))
+                p1 = ((self.vertices[triangle[0]][0] + self.vertices[triangle[1]][0])/2.,(self.vertices[triangle[0]][1] + self.vertices[triangle[1]][1])/2.)
+                p2 = ((self.vertices[triangle[1]][0] + self.vertices[triangle[2]][0])/2.,(self.vertices[triangle[1]][1] + self.vertices[triangle[2]][1])/2.)
+                p3 = ((self.vertices[triangle[2]][0] + self.vertices[triangle[0]][0])/2.,(self.vertices[triangle[2]][1] + self.vertices[triangle[0]][1])/2.)
 
-                self.vertices.append(center)
-                #TODO: Order counter clockwise
-                newTriangles.append((index,triangle[0],triangle[1]))
-                newTriangles.append((index,triangle[2],triangle[0]))
-                newTriangles.append((index,triangle[1],triangle[2]))
+                self.vertices.append(p1)
+                self.vertices.append(p2)
+                self.vertices.append(p3)
 
-                index = index+1
+                newTriangles.append((index,index+1,index+2))
+                newTriangles.append((index,triangle[1],index+1))
+                newTriangles.append((index+1,triangle[2],index+2))
+                newTriangles.append((index+2,triangle[0],index))
+
+                index = index+3
             self.triangles = newTriangles
 
 
 
 myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)])
-myMesh.submesh(4)
+myMesh.submesh(2)
 
 import numpy as np
 import matplotlib.pyplot as plt
