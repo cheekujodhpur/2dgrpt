@@ -15,11 +15,10 @@ class Metric:
         o = np.array(self.origin)
         p = np.array(position)
 
-        g = np.zeros((3,3))
-        g[0,0] = 1.
-        g[1,1] = np.sum((p-o)**2)
+        g = np.zeros((2,2))
+        g[0,0] = 1
         v = p-o
-        g[2,2] = g[1,1]*float(v[1]*v[1])/(v[0]*v[0]+v[1]*v[1])
+        g[1,1] = (np.sin(v[0]*np.pi)**2)
         
         return g
         

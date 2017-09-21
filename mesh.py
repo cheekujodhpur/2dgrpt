@@ -53,13 +53,15 @@ class Mesh:
                 p3 = ((self.vertices[triangle[2]][0] + self.vertices[triangle[0]][0])/2.,(self.vertices[triangle[2]][1] + self.vertices[triangle[0]][1])/2.)
 
                 center = tuple(np.mean(np.array(map(lambda x:np.array(self.vertices[x]),triangle)),axis=0))
-                print p1, p2, p3, center
 
-                mean_metric = np.mean([m.compute_metric(p1), m.compute_metric(p2), m.compute_metric(p3)], axis=0)
-                center_metric = m.compute_metric(center)
-                diff = np.linalg.norm(mean_metric-center_metric) 
+                three_metrics = np.array([m.compute_metric(p1), m.compute_metric(p2), m.compute_metric(p3)])
+                diff = np.linalg.norm(three_metrics.std(0))
+                # mean_metric = np.mean(three_metrics, axis=0)
+                # center_metric = m.compute_metric(center)
+                # diff = np.linalg.norm(mean_metric-center_metric) 
 
                 if diff < 1e-1:
+                    newTriangles.append(triangle)
                     continue
 
                 self.vertices.append(p1)
@@ -77,7 +79,7 @@ class Mesh:
 
 
 myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
-myMesh.submesh(1)
+myMesh.submesh(5)
 
 import numpy as np
 import matplotlib.pyplot as plt
