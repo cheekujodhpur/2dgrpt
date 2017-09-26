@@ -38,6 +38,21 @@ class Mesh:
         self.metric = Metric(origin)
 
 
+    def calculateArea(self, p1, p2, p3):
+        p1 = np.array(p1)
+        p2 = np.array(p2)
+        p3 = np.array(p3)
+
+        if len(p1)==2:
+            p1 = np.insert(p1,-1,1)
+        if len(p2)==2:
+            p2 = np.insert(p2,-1,1)
+        if len(p3)==2:
+            p3 = np.insert(p3,-1,1)
+
+        return 0.5*np.abs(np.linalg.det(np.array([p1,p2,p3])))
+
+
     def submesh(self,n=1):
         """
         Create one level of submesh
@@ -60,7 +75,10 @@ class Mesh:
                 # center_metric = m.compute_metric(center)
                 # diff = np.linalg.norm(mean_metric-center_metric) 
 
-                if diff < 1e-1:
+                area = self.calculateArea(p1,p2,p3)
+                sint = np.sin(center[0]*np.pi)
+                measure = area/(sint*sint)
+                if measure < 1e-2:
                     newTriangles.append(triangle)
                     continue
 
