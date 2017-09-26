@@ -78,7 +78,7 @@ class Mesh:
                 area = self.calculateArea(p1,p2,p3)
                 sint = np.sin(center[0]*np.pi)
                 measure = area/(sint*sint)
-                if measure < 1e-2:
+                if measure < 1e-3:
                     newTriangles.append(triangle)
                     continue
 
@@ -104,9 +104,19 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-X = np.array([vertex[0] for vertex in myMesh.vertices])
-Y = np.array([vertex[1] for vertex in myMesh.vertices])
-Z = np.zeros(len(X))
+# X = np.array([vertex[0] for vertex in myMesh.vertices])
+# Y = np.array([vertex[1] for vertex in myMesh.vertices])
+# Z = np.zeros(len(X))
+# triangles = np.array([list(triangle) for triangle in myMesh.triangles])
+# ax.plot_trisurf(X,Y,Z,triangles=triangles,shade=True,color="gray",linewidth=2)
+
+theta = np.array([vertex[0] for vertex in myMesh.vertices])*np.pi
+phi = np.array([vertex[1] for vertex in myMesh.vertices])*2*np.pi
+X = np.sin(theta)*np.cos(phi)
+Y = np.sin(theta)*np.sin(phi)
+Z = np.cos(theta)
+
 triangles = np.array([list(triangle) for triangle in myMesh.triangles])
 ax.plot_trisurf(X,Y,Z,triangles=triangles,shade=True,color="gray",linewidth=2)
+
 plt.show()
