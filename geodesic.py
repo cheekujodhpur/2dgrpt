@@ -1,9 +1,19 @@
 # this is the file where we draw geodescis
 
 from mesh import Mesh
+import numpy as np
 
 myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
 myMesh.submesh(5)
+
+
+startpoint = np.array((np.random.random(), np.random.random()))
+direction = np.array((np.random.random(), np.random.random()))
+direction = direction / np.linalg.norm(direction)
+
+#TODO: Find the direction we are in
+
+# print startpoint, direction
 
 import numpy as np
 import matplotlib.pyplot as plt
