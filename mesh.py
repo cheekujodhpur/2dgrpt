@@ -78,7 +78,9 @@ class Mesh:
                 area = self.calculateArea(p1,p2,p3)
                 sint = np.sin(center[0]*np.pi)
                 measure = area/(sint*sint)
-                if measure < 1e-3:
+                # call this 1e-2 `scale*scale`, scale=1e-1
+                # relevance will be clear later
+                if measure < 1e-2:
                     newTriangles.append(triangle)
                     continue
 
