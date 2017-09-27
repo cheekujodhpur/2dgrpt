@@ -13,6 +13,7 @@ class Mesh:
     vertices = [] # the list of vertices, each a tuple, 2-tuple
     triangles = [] # 3-tuples of ids of vertices making a triangle
     metric = None
+    neighbours = {}
 
     def __init__(self,corners,origin):
         """
@@ -84,16 +85,32 @@ class Mesh:
                     newTriangles.append(triangle)
                     continue
 
-                self.vertices.append(p1)
-                self.vertices.append(p2)
-                self.vertices.append(p3)
+                if self.vertices.count(p1) > 0:
+                    i1 = self.vertices.index(p1)
+                else:
+                    self.vertices.append(p1)
+                    i1 = index
+                    index = index + 1
 
-                newTriangles.append((index,index+1,index+2))
-                newTriangles.append((index,triangle[1],index+1))
-                newTriangles.append((index+1,triangle[2],index+2))
-                newTriangles.append((index+2,triangle[0],index))
+                if self.vertices.count(p2) > 0:
+                    i2 = self.vertices.index(p2)
+                else:
+                    self.vertices.append(p2)
+                    i2 = index
+                    index = index + 1
 
-                index = index+3
+                if self.vertices.count(p3) > 0:
+                    i3 = self.vertices.index(p3)
+                else:
+                    self.vertices.append(p3)
+                    i3 = index
+                    index = index + 1
+
+                newTriangles.append((i1,i2,i3))
+                newTriangles.append((i1,triangle[1],i2))
+                newTriangles.append((i2,triangle[2],i3))
+                newTriangles.append((i3,triangle[0],i1))
+
             self.triangles = newTriangles
 
 
