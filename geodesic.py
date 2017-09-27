@@ -13,6 +13,19 @@ def random_point(p1, p2, p3):
     c3 = np.random.random()
     return (p1*c1 + p2*c2 + p3*c3)/(c1+c2+c3)
 
+
+def check_for_incidence(triangle, point_of_intersection):
+    a = myMesh.vertices[triangle[0]]
+    b = myMesh.vertices[triangle[1]]
+    c = myMesh.vertices[triangle[2]]
+    if abs(np.cross(point_of_intersection-a,point_of_intersection-b)) < 1e-10: 
+        return True
+    elif abs(np.cross(point_of_intersection-b,point_of_intersection-c)) < 1e-10: 
+        return True
+    elif abs(np.cross(point_of_intersection-c,point_of_intersection-a)) < 1e-10: 
+        return True
+    return False
+
 myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
 myMesh.submesh(6)
 num_triangle = len(myMesh.triangles)
@@ -24,7 +37,8 @@ this_triangle = myMesh.triangles[t_id]
 direction = np.array((np.random.random(), np.random.random()))
 direction = direction / np.linalg.norm(direction)
 
-while True:
+num = 0
+while True and num<5:
 
     startpoint = random_point(
             myMesh.vertices[this_triangle[0]],
@@ -54,22 +68,28 @@ while True:
     segment = max(segment, key=lambda x: intersections[x][0])
     point_of_intersection = startpoint + intersections[segment][0]*direction
 
-    print segment
+    # print segment
     print this_triangle
-    print point_of_intersection
+    # print point_of_intersection
 
     if segment=='ab':
-        triangles = filter(lambda x:(this_triangle[0] in x) and (this_triangle[1] in x), myMesh.triangles)
+        triangles = filter(lambda x:(this_triangle[0] in x) or (this_triangle[1] in x), myMesh.triangles)
     elif segment=='bc':
-        triangles = filter(lambda x:(this_triangle[1] in x) and (this_triangle[2] in x), myMesh.triangles)
+        triangles = filter(lambda x:(this_triangle[1] in x) or (this_triangle[2] in x), myMesh.triangles)
     elif segment=='ca':
-        triangles = filter(lambda x:(this_triangle[2] in x) and (this_triangle[0] in x), myMesh.triangles)
+        triangles = filter(lambda x:(this_triangle[2] in x) or (this_triangle[0] in x), myMesh.triangles)
 
     this_triangle = filter(lambda x:x!=this_triangle, triangles)
+    this_triangle = filter(lambda x:check_for_incidence(x, point_of_intersection),
+            this_triangle)
+
+    print len(this_triangle), this_triangle
     if(this_triangle):
         this_triangle = this_triangle[0]
     else:
         break
+
+    num = num + 1
 
 
 import numpy as np
