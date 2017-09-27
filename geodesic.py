@@ -15,19 +15,20 @@ def random_point(p1, p2, p3):
 
 
 def check_for_incidence(triangle, point_of_intersection):
-    a = myMesh.vertices[triangle[0]]
-    b = myMesh.vertices[triangle[1]]
-    c = myMesh.vertices[triangle[2]]
-    if abs(np.cross(point_of_intersection-a,point_of_intersection-b)) < 1e-10: 
+    a = np.array(myMesh.vertices[triangle[0]])
+    b = np.array(myMesh.vertices[triangle[1]])
+    c = np.array(myMesh.vertices[triangle[2]])
+    pos = np.array(point_of_intersection)
+    if abs(np.linalg.norm(pos-a) + np.linalg.norm(pos-b) - np.linalg.norm(a-b)) < 1e-4: 
         return True
-    elif abs(np.cross(point_of_intersection-b,point_of_intersection-c)) < 1e-10: 
+    elif abs(np.linalg.norm(pos-b) + np.linalg.norm(pos-c) - np.linalg.norm(b-c)) < 1e-4: 
         return True
-    elif abs(np.cross(point_of_intersection-c,point_of_intersection-a)) < 1e-10: 
+    elif abs(np.linalg.norm(pos-c) + np.linalg.norm(pos-a) - np.linalg.norm(c-a)) < 1e-4: 
         return True
     return False
 
 myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
-myMesh.submesh(6)
+myMesh.submesh(2)
 num_triangle = len(myMesh.triangles)
 
 # find start point in a random triangle
@@ -37,15 +38,21 @@ this_triangle = myMesh.triangles[t_id]
 direction = np.array((np.random.random(), np.random.random()))
 direction = direction / np.linalg.norm(direction)
 
-num = 0
-while True and num<5:
+_theta = np.array([])
+_phi = np.array([])
 
-    startpoint = random_point(
-            myMesh.vertices[this_triangle[0]],
-            myMesh.vertices[this_triangle[1]],
-            myMesh.vertices[this_triangle[2]]
-            )
+startpoint = random_point(
+        myMesh.vertices[this_triangle[0]],
+        myMesh.vertices[this_triangle[1]],
+        myMesh.vertices[this_triangle[2]]
+        )
+saved_start = startpoint
 
+flipped = False
+
+while True:
+
+    print this_triangle
     # now figure out the triangle intersection
     a = np.array(myMesh.vertices[this_triangle[0]])
     b = np.array(myMesh.vertices[this_triangle[1]])
@@ -67,10 +74,8 @@ while True and num<5:
     segment = filter(lambda x:intersections[x][1] <= 1 and intersections[x][1] >=0, intersections.keys())
     segment = max(segment, key=lambda x: intersections[x][0])
     point_of_intersection = startpoint + intersections[segment][0]*direction
-
-    # print segment
-    print this_triangle
-    # print point_of_intersection
+    _theta = np.concatenate((_theta, np.linspace(startpoint[0], point_of_intersection[0], 10)))
+    _phi = np.concatenate((_phi, np.linspace(startpoint[1], point_of_intersection[1], 10)))
 
     if segment=='ab':
         triangles = filter(lambda x:(this_triangle[0] in x) or (this_triangle[1] in x), myMesh.triangles)
@@ -83,20 +88,42 @@ while True and num<5:
     this_triangle = filter(lambda x:check_for_incidence(x, point_of_intersection),
             this_triangle)
 
-    print len(this_triangle), this_triangle
-    if(this_triangle):
+    print this_triangle
+    if len(this_triangle)==1:
         this_triangle = this_triangle[0]
-    else:
+    elif len(this_triangle)>1:
+        print "Error. Too many neighbours"
         break
+    else:
+        if not flipped:
+            startpoint = saved_start
+            this_triangle = myMesh.triangles[t_id]
+            direction = -direction
+            flipped = True
+            continue
+        else:
+            break
 
-    num = num + 1
+    startpoint = point_of_intersection
 
+
+# _X = 1.05*np.sin(_theta)*np.cos(_phi)
+# _Y = 1.05*np.sin(_theta)*np.sin(_phi)
+# _Z = 1.05*np.cos(_theta) 
+_X = _theta
+_Y = _phi
+_Z = np.ones(len(_theta))*0.05
+
+print _X
+print _Y
 
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
+plt.hold(True)
+
 # theta = np.array([vertex[0] for vertex in myMesh.vertices])*np.pi
 # phi = np.array([vertex[1] for vertex in myMesh.vertices])*2*np.pi
 # X = np.sin(theta)*np.cos(phi)
@@ -110,6 +137,7 @@ X = np.array([vertex[0] for vertex in myMesh.vertices])
 Y = np.array([vertex[1] for vertex in myMesh.vertices])
 Z = np.zeros(len(X))
 triangles = np.array([list(triangle) for triangle in myMesh.triangles])
-ax.plot_trisurf(X,Y,Z,triangles=triangles,shade=True,color="gray",linewidth=2)
+ax.plot_trisurf(X,Y,Z,triangles=triangles,shade=True,color="gray",linewidth=1)
+ax.scatter(_X,_Y,_Z, color="red",s=0.2)
 
 plt.show()
