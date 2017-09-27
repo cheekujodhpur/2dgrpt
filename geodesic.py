@@ -50,7 +50,8 @@ while True:
     s = np.cross((c-startpoint), direction)/np.cross(direction, (a-c))
     intersections['ca'] = (t,s)
 
-    segment = filter(lambda x:intersections[x][1] <= 1 and intersections[x][1] >=0 and intersections[x][0]>=0, intersections.keys())[0]
+    segment = filter(lambda x:intersections[x][1] <= 1 and intersections[x][1] >=0, intersections.keys())
+    segment = max(segment, key=lambda x: intersections[x][0])
     point_of_intersection = startpoint + intersections[segment][0]*direction
 
     print segment
