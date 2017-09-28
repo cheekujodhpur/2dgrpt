@@ -109,6 +109,8 @@ while True:
             break
 
     startpoint = point_of_intersection
+    direction[0] = direction[0] - 1 * np.sin(startpoint[0]*np.pi) * np.cos(startpoint[0]*np.pi) * direction[1] * direction[1] 
+    direction = direction / np.linalg.norm(direction)
 
 
 # _theta = _theta*np.pi
@@ -127,7 +129,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+# ax = fig.add_subplot(111, projection='3d')
+ax = fig.add_subplot(111)
 plt.hold(True)
 
 # theta = np.array([vertex[0] for vertex in myMesh.vertices])*np.pi
@@ -139,11 +142,11 @@ plt.hold(True)
 # ax.plot_trisurf(X,Y,Z,triangles=triangles,color="gray",linewidth=0.2)
 # ax.scatter(_X,_Y,_Z, color="red", s=1)
 
-X = np.array([vertex[0] for vertex in myMesh.vertices])
-Y = np.array([vertex[1] for vertex in myMesh.vertices])
-Z = np.zeros(len(X))
-triangles = np.array([list(triangle) for triangle in myMesh.triangles])
-ax.plot_trisurf(X,Y,Z,triangles=triangles,shade=True,color="gray",linewidth=1)
-ax.scatter(_X,_Y,_Z, color="red",s=0.2)
+# X = np.array([vertex[0] for vertex in myMesh.vertices])
+# Y = np.array([vertex[1] for vertex in myMesh.vertices])
+# Z = np.zeros(len(X))
+# triangles = np.array([list(triangle) for triangle in myMesh.triangles])
+# ax.plot_trisurf(X,Y,Z,triangles=triangles,shade=True,color="gray",linewidth=1)
+ax.scatter(_X,_Y, color="red",s=0.2)
 
 plt.show()
