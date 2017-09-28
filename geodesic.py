@@ -111,8 +111,8 @@ while True:
             break
 
     startpoint = point_of_intersection
-    direction[0] = direction[0] - 1 * np.sin(startpoint[0]*np.pi) * np.cos(startpoint[0]*np.pi) * direction[1] * direction[1] 
-    direction = direction / np.linalg.norm(direction)
+    direction[0] = direction[0] - 1 * 0.5* np.sin(2*startpoint[0]*np.pi)  * direction[1] * direction[1]
+    # direction = direction / np.linalg.norm(direction)
 
 
 # _theta = _theta*np.pi
@@ -155,12 +155,14 @@ t = np.linspace(0,1,1000)
 def dy_dt(y,t):
     dy_0 = y[2]
     dy_1 = y[3]*np.sin(np.pi*y[0])**2
-    dy_2 = -0.5*np.sin(np.pi*y[0])*(y[3]**2)
+    dy_2 = -0.5*np.sin(2*np.pi*y[0])*(y[3]**2)
     dy_3 = 0
     return np.array([dy_0, dy_1, dy_2, dy_3])
 
 y0 = np.array([saved_start[0], saved_start[1], saved_direction[0], saved_direction[1]])
 result = odeint(dy_dt, y0, t)
+y0 = np.array([saved_start[0], saved_start[1], -saved_direction[0], -saved_direction[1]])
+result = np.concatenate((result,odeint(dy_dt, y0, t)))
 ax.plot(result[:,0], result[:,1], color="blue")
 
 plt.show()
