@@ -2,6 +2,7 @@
 
 from mesh import Mesh
 import numpy as np
+from scipy.integrate import odeint
 
 # assuming p1, p2, p3 are tupes
 def random_point(p1, p2, p3):
@@ -47,6 +48,7 @@ startpoint = random_point(
         myMesh.vertices[this_triangle[2]]
         )
 saved_start = startpoint
+saved_direction = direction
 
 flipped = False
 
@@ -148,5 +150,17 @@ plt.hold(True)
 # triangles = np.array([list(triangle) for triangle in myMesh.triangles])
 # ax.plot_trisurf(X,Y,Z,triangles=triangles,shade=True,color="gray",linewidth=1)
 ax.scatter(_X,_Y, color="red",s=0.2)
+
+t = np.linspace(0,1,1000)
+def dy_dt(y,t):
+    dy_0 = y[2]
+    dy_1 = y[3]*np.sin(np.pi*y[0])**2
+    dy_2 = -0.5*np.sin(np.pi*y[0])*(y[3]**2)
+    dy_3 = 0
+    return np.array([dy_0, dy_1, dy_2, dy_3])
+
+y0 = np.array([saved_start[0], saved_start[1], saved_direction[0], saved_direction[1]])
+result = odeint(dy_dt, y0, t)
+ax.plot(result[:,0], result[:,1], color="blue")
 
 plt.show()
