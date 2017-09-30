@@ -28,7 +28,7 @@ def check_for_incidence(triangle, point_of_intersection):
         return True
     return False
 
-myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
+myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
 myMesh.submesh(6)
 num_triangle = len(myMesh.triangles)
 
@@ -47,8 +47,8 @@ startpoint = random_point(
         myMesh.vertices[this_triangle[1]],
         myMesh.vertices[this_triangle[2]]
         )
-saved_start = startpoint
-saved_direction = direction
+saved_start = startpoint[:]
+saved_direction = np.copy(direction)
 
 flipped = False
 
@@ -102,16 +102,17 @@ while True:
         break
     else:
         if not flipped:
+            # TODO: Solve mutability of start too
             startpoint = saved_start
             this_triangle = myMesh.triangles[t_id]
-            direction = -direction
+            direction = -np.copy(saved_direction)
             flipped = True
             continue
         else:
             break
 
     startpoint = point_of_intersection
-    direction[0] = direction[0] - 1 * 0.5* np.sin(2*startpoint[0]*np.pi)  * direction[1] * direction[1]
+    direction[0] = direction[0] - .1 * 0.5* np.sin(2*startpoint[0]*np.pi)  * direction[1] * direction[1]
     # direction = direction / np.linalg.norm(direction)
 
 
@@ -162,6 +163,7 @@ def dy_dt(y,t):
 y0 = np.array([saved_start[0], saved_start[1], saved_direction[0], saved_direction[1]])
 result = odeint(dy_dt, y0, t)
 y0 = np.array([saved_start[0], saved_start[1], -saved_direction[0], -saved_direction[1]])
+# TODO: This does not go properly back in direction, check why
 result = np.concatenate((result,odeint(dy_dt, y0, t)))
 ax.plot(result[:,0], result[:,1], color="blue")
 
