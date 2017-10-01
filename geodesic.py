@@ -28,8 +28,18 @@ def check_for_incidence(triangle, point_of_intersection):
         return True
     return False
 
-myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
-myMesh.submesh(6)
+def return_incidence(triangle, point_of_intersection):
+    a = np.array(myMesh.vertices[triangle[0]])
+    b = np.array(myMesh.vertices[triangle[1]])
+    c = np.array(myMesh.vertices[triangle[2]])
+    pos = np.array(point_of_intersection)
+    one = abs(np.linalg.norm(pos-a) + np.linalg.norm(pos-b) - np.linalg.norm(a-b)) 
+    two = abs(np.linalg.norm(pos-b) + np.linalg.norm(pos-c) - np.linalg.norm(b-c)) 
+    tre = abs(np.linalg.norm(pos-c) + np.linalg.norm(pos-a) - np.linalg.norm(c-a)) 
+    return min(one, two, tre)
+
+myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
+myMesh.submesh(4)
 num_triangle = len(myMesh.triangles)
 
 # find start point in a random triangle
@@ -99,7 +109,8 @@ while True:
         this_triangle = this_triangle[0]
     elif len(this_triangle)>1:
         print "Error. Too many neighbours"
-        break
+        this_triangle = sort(this_triangle, key=lambda x:return_incidence(x, point_of_intersection))[0]
+        # break
     else:
         if not flipped:
             # TODO: Solve mutability of start too
@@ -118,11 +129,11 @@ while True:
 
 # _theta = _theta*np.pi
 # _phi = _phi*2*np.pi
-# _X = 1.05*np.sin(_theta)*np.cos(_phi)
-# _Y = 1.05*np.sin(_theta)*np.sin(_phi)
+_X = 1.05*np.sin(_theta*np.pi)*np.cos(_phi*2*np.pi)
+_Y = 1.05*np.sin(_theta*np.pi)*np.sin(_phi*2*np.pi)
 # _Z = 1.05*np.cos(_theta) 
-_X = _theta
-_Y = _phi
+# _X = _theta
+# _Y = _phi
 _Z = np.ones(len(_theta))*0.05
 
 # print _X
@@ -153,18 +164,53 @@ plt.hold(True)
 ax.scatter(_X,_Y, color="red",s=0.2)
 
 t = np.linspace(0,1,1000)
-def dy_dt(y,t):
+def f(t, y):
     dy_0 = y[2]
     dy_1 = y[3]*np.sin(np.pi*y[0])**2
     dy_2 = -0.5*np.sin(2*np.pi*y[0])*(y[3]**2)
     dy_3 = 0
     return np.array([dy_0, dy_1, dy_2, dy_3])
 
+def jac(t, y):
+    r1 = np.array([0, 0, 1, 0])
+    r2 = np.array([np.sin(2*np.pi*y[0])*y[3], 0, 0, np.sin(np.pi*y[0])**2])
+    r3 = np.array([-np.cos(2*np.pi*y[0])*(y[3]**2), 0, 0, -y[3]*np.sin(2*np.pi*y[0])])
+    r4 = np.array([0,0,0,0])
+    return np.array([r1,r2,r3,r4])
+
+
+from scipy.integrate import ode
+myOde = ode(f, jac).set_integrator("dopri5")
 y0 = np.array([saved_start[0], saved_start[1], saved_direction[0], saved_direction[1]])
-result = odeint(dy_dt, y0, t)
+myOde.set_initial_value(y0,0)
+t1 = 1
+dt = 1/1000.
+
+result = []
+while myOde.successful() and myOde.t < t1:
+    result.append(myOde.integrate(myOde.t+dt))
+
+result = np.array(result)
+# result = odeint(dy_dt, y0, t)
+_X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
+_Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
+ax.plot(_X, _Y, color="blue")
+# result = np.concatenate((result,odeint(dy_dt, y0, t)))
+# plot the opposite direction with a different color
+
+myOde2 = ode(f, jac).set_integrator("dopri5")
 y0 = np.array([saved_start[0], saved_start[1], -saved_direction[0], -saved_direction[1]])
-# TODO: This does not go properly back in direction, check why
-result = np.concatenate((result,odeint(dy_dt, y0, t)))
-ax.plot(result[:,0], result[:,1], color="blue")
+myOde2.set_initial_value(y0,0)
+t1 = 1
+dt = 1/1000.
+
+result = []
+while myOde2.successful() and myOde2.t < t1:
+    result.append(myOde2.integrate(myOde2.t+dt))
+# result2 = odeint(dy_dt, y0, t)
+result = np.array(result)
+_X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
+_Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
+ax.plot(_X, _Y, color="green")
 
 plt.show()
