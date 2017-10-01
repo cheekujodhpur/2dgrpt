@@ -81,7 +81,7 @@ class Mesh:
                 measure = area/(sint*sint)
                 # call this 1e-2 `scale*scale`, scale=1e-1
                 # relevance will be clear later
-                if measure < 1e-2:
+                if measure < 1e-4:
                     newTriangles.append(triangle)
                     continue
 
