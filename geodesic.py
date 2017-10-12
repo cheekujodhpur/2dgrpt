@@ -38,6 +38,22 @@ def return_incidence(triangle, point_of_intersection):
     tre = abs(np.linalg.norm(pos-c) + np.linalg.norm(pos-a) - np.linalg.norm(c-a)) 
     return min(one, two, tre)
 
+# Functions for integration
+def f(t, y):
+    dy_0 = y[2]
+    dy_1 = y[3]*np.sin(np.pi*y[0])**2
+    dy_2 = -0.5*np.sin(2*np.pi*y[0])*(y[3]**2)
+    dy_3 = 0
+    return np.array([dy_0, dy_1, dy_2, dy_3])
+
+def jac(t, y):
+    r1 = np.array([0, 0, 1, 0])
+    r2 = np.array([np.sin(2*np.pi*y[0])*y[3], 0, 0, np.sin(np.pi*y[0])**2])
+    r3 = np.array([-np.cos(2*np.pi*y[0])*(y[3]**2), 0, 0, -y[3]*np.sin(2*np.pi*y[0])])
+    r4 = np.array([0,0,0,0])
+    return np.array([r1,r2,r3,r4])
+
+
 myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
 myMesh.submesh(4)
 num_triangle = len(myMesh.triangles)
@@ -46,7 +62,8 @@ num_triangle = len(myMesh.triangles)
 t_id = int(np.random.random()*num_triangle) #triangle_id
 this_triangle = myMesh.triangles[t_id]
 
-direction = np.array((np.random.random(), np.random.random()))
+# direction = np.array((np.random.random(), np.random.random()))
+direction = np.array((0.,1.))
 direction = direction / np.linalg.norm(direction)
 
 _theta = np.array([])
@@ -57,12 +74,15 @@ startpoint = random_point(
         myMesh.vertices[this_triangle[1]],
         myMesh.vertices[this_triangle[2]]
         )
+
 saved_start = startpoint[:]
 saved_direction = np.copy(direction)
 
 flipped = False
 
 while True:
+
+    print jac(0, np.array([startpoint[0], startpoint[1], direction[0], direction[1]]))
 
     # print map(lambda x:myMesh.vertices[x], np.array(this_triangle))
     # now figure out the triangle intersection
@@ -109,11 +129,10 @@ while True:
         this_triangle = this_triangle[0]
     elif len(this_triangle)>1:
         print "Error. Too many neighbours"
-        this_triangle = sort(this_triangle, key=lambda x:return_incidence(x, point_of_intersection))[0]
+        this_triangle = sorted(this_triangle, key=lambda x:return_incidence(x, point_of_intersection))[0]
         # break
     else:
         if not flipped:
-            # TODO: Solve mutability of start too
             startpoint = saved_start
             this_triangle = myMesh.triangles[t_id]
             direction = -np.copy(saved_direction)
@@ -131,10 +150,10 @@ while True:
 # _phi = _phi*2*np.pi
 _X = 1.05*np.sin(_theta*np.pi)*np.cos(_phi*2*np.pi)
 _Y = 1.05*np.sin(_theta*np.pi)*np.sin(_phi*2*np.pi)
-# _Z = 1.05*np.cos(_theta) 
+_Z = 1.05*np.cos(_theta) 
 # _X = _theta
 # _Y = _phi
-_Z = np.ones(len(_theta))*0.05
+# _Z = np.ones(len(_theta))*0.05
 
 # print _X
 # print _Y
@@ -143,8 +162,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-ax = fig.add_subplot(111)
+ax = fig.add_subplot(111, projection='3d')
+# ax = fig.add_subplot(111)
 plt.hold(True)
 
 # theta = np.array([vertex[0] for vertex in myMesh.vertices])*np.pi
@@ -161,23 +180,9 @@ plt.hold(True)
 # Z = np.zeros(len(X))
 # triangles = np.array([list(triangle) for triangle in myMesh.triangles])
 # ax.plot_trisurf(X,Y,Z,triangles=triangles,shade=True,color="gray",linewidth=1)
-ax.scatter(_X,_Y, color="red",s=0.2)
+ax.scatter(_X,_Y,_Z,color="red",s=0.2)
 
 t = np.linspace(0,1,1000)
-def f(t, y):
-    dy_0 = y[2]
-    dy_1 = y[3]*np.sin(np.pi*y[0])**2
-    dy_2 = -0.5*np.sin(2*np.pi*y[0])*(y[3]**2)
-    dy_3 = 0
-    return np.array([dy_0, dy_1, dy_2, dy_3])
-
-def jac(t, y):
-    r1 = np.array([0, 0, 1, 0])
-    r2 = np.array([np.sin(2*np.pi*y[0])*y[3], 0, 0, np.sin(np.pi*y[0])**2])
-    r3 = np.array([-np.cos(2*np.pi*y[0])*(y[3]**2), 0, 0, -y[3]*np.sin(2*np.pi*y[0])])
-    r4 = np.array([0,0,0,0])
-    return np.array([r1,r2,r3,r4])
-
 
 from scipy.integrate import ode
 myOde = ode(f, jac).set_integrator("dopri5")
@@ -194,7 +199,8 @@ result = np.array(result)
 # result = odeint(dy_dt, y0, t)
 _X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
 _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
-ax.plot(_X, _Y, color="blue")
+_Z = 1.05*np.cos(result[:,0]*np.pi) 
+ax.plot(_X, _Y,_Z, color="blue")
 # result = np.concatenate((result,odeint(dy_dt, y0, t)))
 # plot the opposite direction with a different color
 
@@ -211,6 +217,7 @@ while myOde2.successful() and myOde2.t < t1:
 result = np.array(result)
 _X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
 _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
-ax.plot(_X, _Y, color="green")
+_Z = 1.05*np.cos(result[:,0]*np.pi) 
+ax.plot(_X, _Y, _Z, color="green")
 
 plt.show()
