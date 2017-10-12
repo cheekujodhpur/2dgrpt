@@ -63,7 +63,7 @@ t_id = int(np.random.random()*num_triangle) #triangle_id
 this_triangle = myMesh.triangles[t_id]
 
 # direction = np.array((np.random.random(), np.random.random()))
-direction = np.array((0.,1.))
+direction = np.array((1.,0.))
 direction = direction / np.linalg.norm(direction)
 
 _theta = np.array([])
@@ -145,12 +145,11 @@ while True:
     direction[0] = direction[0] - .1 * 0.5* np.sin(2*startpoint[0]*np.pi)  * direction[1] * direction[1]
     # direction = direction / np.linalg.norm(direction)
 
-
 # _theta = _theta*np.pi
 # _phi = _phi*2*np.pi
 _X = 1.05*np.sin(_theta*np.pi)*np.cos(_phi*2*np.pi)
 _Y = 1.05*np.sin(_theta*np.pi)*np.sin(_phi*2*np.pi)
-_Z = 1.05*np.cos(_theta) 
+_Z = 1.05*np.cos(_theta*np.pi)
 # _X = _theta
 # _Y = _phi
 # _Z = np.ones(len(_theta))*0.05
