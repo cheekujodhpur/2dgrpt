@@ -55,7 +55,7 @@ def jac(t, y):
 
 
 myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
-myMesh.submesh(4)
+myMesh.submesh(6)
 num_triangle = len(myMesh.triangles)
 
 # find start point in a random triangle
@@ -63,7 +63,7 @@ t_id = int(np.random.random()*num_triangle) #triangle_id
 this_triangle = myMesh.triangles[t_id]
 
 # direction = np.array((np.random.random(), np.random.random()))
-direction = np.array((1.,0.))
+direction = np.array((0.0,1.0))
 direction = direction / np.linalg.norm(direction)
 
 _theta = np.array([])
