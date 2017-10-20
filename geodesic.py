@@ -41,15 +41,15 @@ def return_incidence(triangle, point_of_intersection):
 # Functions for integration
 def f(t, y):
     dy_0 = y[2]
-    dy_1 = y[3]*np.sin(np.pi*y[0])**2
-    dy_2 = -0.5*np.sin(2*np.pi*y[0])*(y[3]**2)
+    dy_1 = y[3]*y[0]
+    dy_2 = -0.5*y[0]*(y[3]**2)
     dy_3 = 0
     return np.array([dy_0, dy_1, dy_2, dy_3])
 
 def jac(t, y):
     r1 = np.array([0, 0, 1, 0])
-    r2 = np.array([np.sin(2*np.pi*y[0])*y[3], 0, 0, np.sin(np.pi*y[0])**2])
-    r3 = np.array([-np.cos(2*np.pi*y[0])*(y[3]**2), 0, 0, -y[3]*np.sin(2*np.pi*y[0])])
+    r2 = np.array([1, 0, 0, 1])
+    r3 = np.array([-0.5*(y[3]**2), 0, 0, -y[3]*y[0]])
     r4 = np.array([0,0,0,0])
     return np.array([r1,r2,r3,r4])
 
@@ -82,7 +82,11 @@ print t_id, saved_start, saved_direction
 
 flipped = False
 
+mesh_pc = 0
+
 while True:
+
+    mesh_pc = mesh_pc + 1
 
     # print jac(0, np.array([startpoint[0], startpoint[1], direction[0], direction[1]]))
     # print direction
@@ -145,16 +149,16 @@ while True:
             break
 
     startpoint = point_of_intersection
-    direction[0] = direction[0] - 1e-2 * 0.5* np.sin(2*startpoint[0]*np.pi)  * direction[1] * direction[1]
+    direction[0] = direction[0] - 1e-2 * 0.5 * direction[1] * direction[1]
     direction = direction / np.linalg.norm(direction)
 
 # _theta = _theta*np.pi
 # _phi = _phi*2*np.pi
-_X = 1.05*np.sin(_theta*np.pi)*np.cos(_phi*2*np.pi)
-_Y = 1.05*np.sin(_theta*np.pi)*np.sin(_phi*2*np.pi)
-_Z = 1.05*np.cos(_theta*np.pi)
-# _X = _theta
-# _Y = _phi
+# _X = 1.05*np.sin(_theta*np.pi)*np.cos(_phi*2*np.pi)
+# _Y = 1.05*np.sin(_theta*np.pi)*np.sin(_phi*2*np.pi)
+# _Z = 1.05*np.cos(_theta*np.pi)
+_X = _theta
+_Y = _phi
 # _Z = np.ones(len(_theta))*0.05
 
 # print _X
@@ -164,8 +168,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-# ax = fig.add_subplot(111)
+# ax = fig.add_subplot(111, projection='3d')
+ax = fig.add_subplot(111)
+ax.set_xlim([0,1])
+ax.set_ylim([0,1])
 plt.hold(True)
 
 # theta = np.array([vertex[0] for vertex in myMesh.vertices])*np.pi
@@ -182,10 +188,14 @@ plt.hold(True)
 # Z = np.zeros(len(X))
 # triangles = np.array([list(triangle) for triangle in myMesh.triangles])
 # ax.plot_trisurf(X,Y,Z,triangles=triangles,shade=True,color="gray",linewidth=1)
-ax.scatter(_X,_Y,_Z,color="red",s=0.2)
+# ax.scatter(_X,_Y,_Z,color="red",s=0.2)
+ax.scatter(_X, _Y, color="red", s=0.2)
 
 t = np.linspace(0,1,1000)
 
+##########
+# ODEINT #
+##########
 from scipy.integrate import ode
 myOde = ode(f, jac).set_integrator("dopri5")
 y0 = np.array([saved_start[0], saved_start[1], saved_direction[0], saved_direction[1]])
@@ -193,16 +203,20 @@ myOde.set_initial_value(y0,0)
 t1 = 1
 dt = 1/1000.
 
+ode_pc = 0
+
 result = []
 while myOde.successful() and myOde.t < t1:
     result.append(myOde.integrate(myOde.t+dt))
+    ode_pc = ode_pc + 1
 
 result = np.array(result)
 # result = odeint(dy_dt, y0, t)
-_X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
-_Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
-_Z = 1.05*np.cos(result[:,0]*np.pi) 
-ax.plot(_X, _Y,_Z, color="blue")
+# _X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
+# _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
+# _Z = 1.05*np.cos(result[:,0]*np.pi) 
+# ax.plot(_X, _Y,_Z, color="blue")
+ax.plot(result[:,0], result[:,1], color="blue")
 # result = np.concatenate((result,odeint(dy_dt, y0, t)))
 # plot the opposite direction with a different color
 
@@ -215,11 +229,18 @@ dt = 1/1000.
 result = []
 while myOde2.successful() and myOde2.t < t1:
     result.append(myOde2.integrate(myOde2.t+dt))
+    ode_pc = ode_pc + 1
 # result2 = odeint(dy_dt, y0, t)
 result = np.array(result)
-_X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
-_Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
-_Z = 1.05*np.cos(result[:,0]*np.pi) 
-ax.plot(_X, _Y, _Z, color="green")
+# _X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
+# _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
+# _Z = 1.05*np.cos(result[:,0]*np.pi) 
+# ax.plot(_X, _Y, _Z, color="green")
+ax.plot(result[:,0], result[:,1], color="green")
+##########
+# ODEINT #
+##########
 
 plt.show()
+
+print mesh_pc/float(ode_pc)

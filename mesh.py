@@ -77,11 +77,12 @@ class Mesh:
                 # diff = np.linalg.norm(mean_metric-center_metric) 
 
                 area = self.calculateArea(p1,p2,p3)
-                sint = np.sin(center[0]*np.pi)
-                measure = area/(sint*sint)
+                # TODO: replace this by determinantof metric
+                # sint = np.sin(center[0]*np.pi)
+                measure = area/(center[0])
                 # call this 1e-2 `scale*scale`, scale=1e-1
                 # relevance will be clear later
-                if measure < 1e-4:
+                if measure < 1e-2:
                     newTriangles.append(triangle)
                     continue
 
