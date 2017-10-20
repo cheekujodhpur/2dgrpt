@@ -62,8 +62,8 @@ num_triangle = len(myMesh.triangles)
 t_id = int(np.random.random()*num_triangle) #triangle_id
 this_triangle = myMesh.triangles[t_id]
 
-# direction = np.array((np.random.random(), np.random.random()))
-direction = np.array((0.0,1.0))
+direction = np.array((np.random.random(), np.random.random()))
+# direction = np.array((0.0,1.0))
 direction = direction / np.linalg.norm(direction)
 
 _theta = np.array([])
@@ -78,11 +78,14 @@ startpoint = random_point(
 saved_start = startpoint[:]
 saved_direction = np.copy(direction)
 
+print t_id, saved_start, saved_direction
+
 flipped = False
 
 while True:
 
-    print jac(0, np.array([startpoint[0], startpoint[1], direction[0], direction[1]]))
+    # print jac(0, np.array([startpoint[0], startpoint[1], direction[0], direction[1]]))
+    # print direction
 
     # print map(lambda x:myMesh.vertices[x], np.array(this_triangle))
     # now figure out the triangle intersection
@@ -142,8 +145,8 @@ while True:
             break
 
     startpoint = point_of_intersection
-    direction[0] = direction[0] - .1 * 0.5* np.sin(2*startpoint[0]*np.pi)  * direction[1] * direction[1]
-    # direction = direction / np.linalg.norm(direction)
+    direction[0] = direction[0] - 1e-2 * 0.5* np.sin(2*startpoint[0]*np.pi)  * direction[1] * direction[1]
+    direction = direction / np.linalg.norm(direction)
 
 # _theta = _theta*np.pi
 # _phi = _phi*2*np.pi
