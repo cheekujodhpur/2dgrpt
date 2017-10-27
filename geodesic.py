@@ -217,7 +217,7 @@ while myOde.successful() and myOde.t < t1:
     ode_pc = ode_pc + 1
 
 result = np.array(result)
-print result[:50]
+# print result[:50]
 # result = odeint(dy_dt, y0, t)
 # _X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
 # _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
@@ -248,9 +248,16 @@ ax.plot(result[:,0], result[:,1], color="green")
 # ODEINT #
 ##########
 
+t = np.linspace(0,1,1000)
+iX = saved_direction[0]*t - (saved_direction[1]**2)*t*t*0.25 + saved_start[0]
+iY = saved_direction[0]*saved_direction[1]*t*t*0.5 - (saved_direction[1]**3)*t*t*t*(1/12.) + \
+        saved_start[0]*saved_direction[1]*t + saved_start[1]
+
+ax.plot(iX, iY, color='black')
+
 plt.show()
 
 print mesh_pc/float(ode_pc)
 
-print "start points\n", start_points
-print "directions\n", directions
+# print "start points\n", start_points
+# print "directions\n", directions
