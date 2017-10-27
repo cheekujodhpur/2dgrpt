@@ -41,21 +41,22 @@ def return_incidence(triangle, point_of_intersection):
 # Functions for integration
 def f(t, y):
     dy_0 = y[2]
-    dy_1 = y[3]*y[0]
-    dy_2 = -0.5*y[0]*(y[3]**2)
+    dy_1 = y[0]*y[3]
+    # dy_2 = -0.5*y[0]*(y[3]**2)
+    dy_2 = -0.5*(y[3]**2)
     dy_3 = 0
     return np.array([dy_0, dy_1, dy_2, dy_3])
 
 def jac(t, y):
     r1 = np.array([0, 0, 1, 0])
     r2 = np.array([1, 0, 0, 1])
-    r3 = np.array([-0.5*(y[3]**2), 0, 0, -y[3]*y[0]])
+    r3 = np.array([0, 0, 0, -y[3]])
     r4 = np.array([0,0,0,0])
     return np.array([r1,r2,r3,r4])
 
 
 myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
-myMesh.submesh(6)
+myMesh.submesh(8)
 num_triangle = len(myMesh.triangles)
 
 # find start point in a random triangle
@@ -79,6 +80,8 @@ saved_start = startpoint[:]
 saved_direction = np.copy(direction)
 
 print t_id, saved_start, saved_direction
+start_points = []
+directions = []
 
 flipped = False
 
@@ -86,6 +89,8 @@ mesh_pc = 0
 
 while True:
 
+    start_points.append(startpoint)
+    directions.append(direction)
     mesh_pc = mesh_pc + 1
 
     # print jac(0, np.array([startpoint[0], startpoint[1], direction[0], direction[1]]))
@@ -159,7 +164,7 @@ while True:
 # _Z = 1.05*np.cos(_theta*np.pi)
 _X = _theta
 _Y = _phi
-# _Z = np.ones(len(_theta))*0.05
+_Z = np.ones(len(_theta))*0.5
 
 # print _X
 # print _Y
@@ -172,6 +177,7 @@ fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_xlim([0,1])
 ax.set_ylim([0,1])
+# ax.set_zlim([0,1])
 plt.hold(True)
 
 # theta = np.array([vertex[0] for vertex in myMesh.vertices])*np.pi
@@ -211,6 +217,7 @@ while myOde.successful() and myOde.t < t1:
     ode_pc = ode_pc + 1
 
 result = np.array(result)
+print result[:50]
 # result = odeint(dy_dt, y0, t)
 # _X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
 # _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
@@ -244,3 +251,6 @@ ax.plot(result[:,0], result[:,1], color="green")
 plt.show()
 
 print mesh_pc/float(ode_pc)
+
+print "start points\n", start_points
+print "directions\n", directions
