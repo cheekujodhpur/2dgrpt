@@ -79,13 +79,89 @@ startpoint = random_point(
 saved_start = startpoint[:]
 saved_direction = np.copy(direction)
 
-print t_id, saved_start, saved_direction
+print "triangle id", t_id
+print "start", saved_start
+print "direction", saved_direction
 start_points = []
 directions = []
 
 flipped = False
 
 mesh_pc = 0
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
+ax = fig.add_subplot(111)
+ax.set_xlim([0,1])
+ax.set_ylim([0,1])
+# ax.set_zlim([0,1])
+plt.hold(True)
+
+t = np.linspace(0,1,1000)
+
+##########
+# ODEINT #
+##########
+from scipy.integrate import ode
+myOde = ode(f, jac).set_integrator("dopri5")
+y0 = np.array([saved_start[0], saved_start[1], saved_direction[0], saved_direction[1]])
+myOde.set_initial_value(y0,0)
+t1 = 1
+dt = 1/1000.
+
+ode_pc = 0
+
+result = []
+while myOde.successful() and myOde.t < t1:
+    result.append(myOde.integrate(myOde.t+dt))
+    ode_pc = ode_pc + 1
+
+result = np.array(result)
+# print result[:50]
+# result = odeint(dy_dt, y0, t)
+# _X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
+# _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
+# _Z = 1.05*np.cos(result[:,0]*np.pi) 
+# ax.plot(_X, _Y,_Z, color="blue")
+ax.plot(result[:,0], result[:,1], color="blue")
+# result = np.concatenate((result,odeint(dy_dt, y0, t)))
+# plot the opposite direction with a different color
+
+myOde2 = ode(f, jac).set_integrator("dopri5")
+y0 = np.array([saved_start[0], saved_start[1], -saved_direction[0], -saved_direction[1]])
+myOde2.set_initial_value(y0,0)
+t1 = 1
+dt = 1/1000.
+
+result = []
+while myOde2.successful() and myOde2.t < t1:
+    result.append(myOde2.integrate(myOde2.t+dt))
+    ode_pc = ode_pc + 1
+# result2 = odeint(dy_dt, y0, t)
+result = np.array(result)
+# _X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
+# _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
+# _Z = 1.05*np.cos(result[:,0]*np.pi) 
+# ax.plot(_X, _Y, _Z, color="green")
+ax.plot(result[:,0], result[:,1], color="green")
+##########
+# ODEINT #
+##########
+
+# t = np.linspace(0,1,1000)
+# iX = saved_direction[0]*t - (saved_direction[1]**2)*t*t*0.25 + saved_start[0]
+# iY = saved_direction[0]*saved_direction[1]*t*t*0.5 - (saved_direction[1]**3)*t*t*t*(1/12.) + \
+#         saved_start[0]*saved_direction[1]*t + saved_start[1]
+# 
+# ax.plot(iX, iY, color='black')
+
+startpoint = saved_start[:]
+direction = result[1,:2]-result[0,:2]
+direction = direction / np.linalg.norm(direction)
+saved_direction = np.copy(direction)
 
 while True:
 
@@ -166,20 +242,6 @@ _X = _theta
 _Y = _phi
 _Z = np.ones(len(_theta))*0.5
 
-# print _X
-# print _Y
-
-import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-ax = fig.add_subplot(111)
-ax.set_xlim([0,1])
-ax.set_ylim([0,1])
-# ax.set_zlim([0,1])
-plt.hold(True)
-
 # theta = np.array([vertex[0] for vertex in myMesh.vertices])*np.pi
 # phi = np.array([vertex[1] for vertex in myMesh.vertices])*2*np.pi
 # X = np.sin(theta)*np.cos(phi)
@@ -195,69 +257,17 @@ plt.hold(True)
 # triangles = np.array([list(triangle) for triangle in myMesh.triangles])
 # ax.plot_trisurf(X,Y,Z,triangles=triangles,shade=True,color="gray",linewidth=1)
 # ax.scatter(_X,_Y,_Z,color="red",s=0.2)
+
 ax.scatter(_X, _Y, color="red", s=0.2)
 
-t = np.linspace(0,1,1000)
+# print _X
+# print _Y
 
-##########
-# ODEINT #
-##########
-from scipy.integrate import ode
-myOde = ode(f, jac).set_integrator("dopri5")
-y0 = np.array([saved_start[0], saved_start[1], saved_direction[0], saved_direction[1]])
-myOde.set_initial_value(y0,0)
-t1 = 1
-dt = 1/1000.
-
-ode_pc = 0
-
-result = []
-while myOde.successful() and myOde.t < t1:
-    result.append(myOde.integrate(myOde.t+dt))
-    ode_pc = ode_pc + 1
-
-result = np.array(result)
-# print result[:50]
-# result = odeint(dy_dt, y0, t)
-# _X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
-# _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
-# _Z = 1.05*np.cos(result[:,0]*np.pi) 
-# ax.plot(_X, _Y,_Z, color="blue")
-ax.plot(result[:,0], result[:,1], color="blue")
-# result = np.concatenate((result,odeint(dy_dt, y0, t)))
-# plot the opposite direction with a different color
-
-myOde2 = ode(f, jac).set_integrator("dopri5")
-y0 = np.array([saved_start[0], saved_start[1], -saved_direction[0], -saved_direction[1]])
-myOde2.set_initial_value(y0,0)
-t1 = 1
-dt = 1/1000.
-
-result = []
-while myOde2.successful() and myOde2.t < t1:
-    result.append(myOde2.integrate(myOde2.t+dt))
-    ode_pc = ode_pc + 1
-# result2 = odeint(dy_dt, y0, t)
-result = np.array(result)
-# _X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
-# _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
-# _Z = 1.05*np.cos(result[:,0]*np.pi) 
-# ax.plot(_X, _Y, _Z, color="green")
-ax.plot(result[:,0], result[:,1], color="green")
-##########
-# ODEINT #
-##########
-
-t = np.linspace(0,1,1000)
-iX = saved_direction[0]*t - (saved_direction[1]**2)*t*t*0.25 + saved_start[0]
-iY = saved_direction[0]*saved_direction[1]*t*t*0.5 - (saved_direction[1]**3)*t*t*t*(1/12.) + \
-        saved_start[0]*saved_direction[1]*t + saved_start[1]
-
-ax.plot(iX, iY, color='black')
 
 plt.show()
 
-print mesh_pc/float(ode_pc)
+print "mesh size", len(myMesh.triangles)
+print "computation save", mesh_pc/float(ode_pc)
 
 # print "start points\n", start_points
 # print "directions\n", directions
