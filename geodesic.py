@@ -126,7 +126,7 @@ result = np.array(result)
 # _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
 # _Z = 1.05*np.cos(result[:,0]*np.pi) 
 # ax.plot(_X, _Y,_Z, color="blue")
-ax.plot(result[:,0], result[:,1], color="blue")
+ax.plot(result[:,0], result[:,1], color="blue", linewidth=2)
 # result = np.concatenate((result,odeint(dy_dt, y0, t)))
 # plot the opposite direction with a different color
 
@@ -146,7 +146,7 @@ result = np.array(result)
 # _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
 # _Z = 1.05*np.cos(result[:,0]*np.pi) 
 # ax.plot(_X, _Y, _Z, color="green")
-ax.plot(result[:,0], result[:,1], color="green")
+ax.plot(result[:,0], result[:,1], color="green", linewidth=2)
 ##########
 # ODEINT #
 ##########
@@ -163,11 +163,16 @@ direction = result[1,:2]-result[0,:2]
 direction = direction / np.linalg.norm(direction)
 saved_direction = np.copy(direction)
 
+# coloring faces
+fcolors = np.zeros(num_triangle)
+
 while True:
 
     start_points.append(startpoint)
     directions.append(direction)
     mesh_pc = mesh_pc + 1
+
+    fcolors[myMesh.triangles.index(this_triangle)] = 1
 
     # print jac(0, np.array([startpoint[0], startpoint[1], direction[0], direction[1]]))
     # print direction
@@ -251,11 +256,12 @@ _Z = np.ones(len(_theta))*0.5
 # ax.plot_trisurf(X,Y,Z,triangles=triangles,color="gray",linewidth=0.2)
 # ax.scatter(_X,_Y,_Z, color="red", s=1)
 
-# X = np.array([vertex[0] for vertex in myMesh.vertices])
-# Y = np.array([vertex[1] for vertex in myMesh.vertices])
+X = np.array([vertex[0] for vertex in myMesh.vertices])
+Y = np.array([vertex[1] for vertex in myMesh.vertices])
 # Z = np.zeros(len(X))
-# triangles = np.array([list(triangle) for triangle in myMesh.triangles])
+triangles = np.array([list(triangle) for triangle in myMesh.triangles])
 # ax.plot_trisurf(X,Y,Z,triangles=triangles,shade=True,color="gray",linewidth=1)
+ax.tripcolor(X,Y,triangles=triangles, facecolors=fcolors, edgecolors='k', cmap='binary')
 # ax.scatter(_X,_Y,_Z,color="red",s=0.2)
 
 ax.scatter(_X, _Y, color="red", s=0.2)
