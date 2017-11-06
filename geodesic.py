@@ -76,6 +76,11 @@ startpoint = random_point(
         myMesh.vertices[this_triangle[2]]
         )
 
+# This is the covariant direction, I have to correct it to contravariant direction
+direction[0] = direction[0]
+direction[1] = direction[1]*startpoint[0]
+direction = direction / np.linalg.norm(direction)
+
 saved_start = startpoint[:]
 saved_direction = np.copy(direction)
 
@@ -159,9 +164,10 @@ ax.plot(result[:,0], result[:,1], color="green", linewidth=2)
 # ax.plot(iX, iY, color='black')
 
 startpoint = saved_start[:]
-direction = result[1,:2]-result[0,:2]
-direction = direction / np.linalg.norm(direction)
-saved_direction = np.copy(direction)
+# direction = result[1,:2]-result[0,:2]
+# direction = direction / np.linalg.norm(direction)
+# saved_direction = np.copy(direction)
+direction = np.copy(saved_direction)
 
 # coloring faces
 fcolors = np.zeros(num_triangle)
@@ -235,7 +241,7 @@ while True:
             break
 
     startpoint = point_of_intersection
-    direction[0] = direction[0] - 1e-2 * 0.5 * direction[1] * direction[1]
+    direction[0] = direction[0] - 1e-4 * 0.5 * direction[1] * direction[1]
     direction = direction / np.linalg.norm(direction)
 
 # _theta = _theta*np.pi
