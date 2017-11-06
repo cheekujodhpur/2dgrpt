@@ -56,7 +56,7 @@ def jac(t, y):
 
 
 myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
-myMesh.submesh(8)
+myMesh.submesh(6)
 num_triangle = len(myMesh.triangles)
 
 # find start point in a random triangle
@@ -67,16 +67,12 @@ direction = np.array((np.random.random(), np.random.random()))
 # direction = np.array((0.0,1.0))
 direction = direction / np.linalg.norm(direction)
 
-_theta = np.array([])
-_phi = np.array([])
-
 startpoint = random_point(
         myMesh.vertices[this_triangle[0]],
         myMesh.vertices[this_triangle[1]],
         myMesh.vertices[this_triangle[2]]
         )
 
-covdir = np.copy(direction)
 
 # This is the covariant direction, I have to correct it to contravariant direction
 direction[0] = direction[0]
@@ -89,12 +85,6 @@ saved_direction = np.copy(direction)
 print "triangle id", t_id
 print "start", saved_start
 print "direction", saved_direction
-start_points = []
-directions = []
-
-flipped = False
-
-mesh_pc = 0
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -133,7 +123,7 @@ result = np.array(result)
 # _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
 # _Z = 1.05*np.cos(result[:,0]*np.pi) 
 # ax.plot(_X, _Y,_Z, color="blue")
-ax.plot(result[:,0], result[:,1], color="blue", linewidth=2)
+ax.plot(result[:,0], result[:,1], color="blue", linewidth=5)
 # result = np.concatenate((result,odeint(dy_dt, y0, t)))
 # plot the opposite direction with a different color
 
@@ -153,7 +143,7 @@ result = np.array(result)
 # _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
 # _Z = 1.05*np.cos(result[:,0]*np.pi) 
 # ax.plot(_X, _Y, _Z, color="green")
-ax.plot(result[:,0], result[:,1], color="green", linewidth=2)
+ax.plot(result[:,0], result[:,1], color="green", linewidth=5)
 ##########
 # ODEINT #
 ##########
@@ -165,125 +155,122 @@ ax.plot(result[:,0], result[:,1], color="green", linewidth=2)
 # 
 # ax.plot(iX, iY, color='black')
 
-startpoint = saved_start[:]
-# direction = result[1,:2]-result[0,:2]
-# direction = direction / np.linalg.norm(direction)
-# saved_direction = np.copy(direction)
-direction = np.copy(saved_direction)
+first_time = True
+def do_iteration(rate=1e-4,pcol="red"):
 
-# coloring faces
-fcolors = np.zeros(num_triangle)
+    _theta = np.array([])
+    _phi = np.array([])
 
-covdirn = -np.copy(covdir)
+    startpoint = saved_start[:]
+    direction = np.copy(saved_direction)
 
-while True:
+    # coloring faces
+    fcolors = np.zeros(num_triangle)
 
-    start_points.append(startpoint)
-    directions.append(direction)
-    mesh_pc = mesh_pc + 1
+    covdir = np.copy(direction)
+    covdirn = -np.copy(covdir)
+    global mesh_pc
+    mesh_pc = 0
+    flipped = False
+    start_points = []
+    directions = []
+    this_triangle = myMesh.triangles[t_id]
 
-    fcolors[myMesh.triangles.index(this_triangle)] = 1
+    while True:
 
-    # print jac(0, np.array([startpoint[0], startpoint[1], direction[0], direction[1]]))
-    # print direction
+        start_points.append(startpoint)
+        directions.append(direction)
+        mesh_pc = mesh_pc + 1
 
-    # print map(lambda x:myMesh.vertices[x], np.array(this_triangle))
-    # now figure out the triangle intersection
-    a = np.array(myMesh.vertices[this_triangle[0]])
-    b = np.array(myMesh.vertices[this_triangle[1]])
-    c = np.array(myMesh.vertices[this_triangle[2]])
-    intersections = {}
-    # ab
-    t = np.cross((a-startpoint), (b-a))/np.cross(direction, (b-a))
-    s = np.cross((a-startpoint), direction)/np.cross(direction, (b-a))
-    intersections['ab'] = (t,s)
-    # bc
-    t = np.cross((b-startpoint), (c-b))/np.cross(direction, (c-b))
-    s = np.cross((b-startpoint), direction)/np.cross(direction, (c-b))
-    intersections['bc'] = (t,s)
-    # ca
-    t = np.cross((c-startpoint), (a-c))/np.cross(direction, (a-c))
-    s = np.cross((c-startpoint), direction)/np.cross(direction, (a-c))
-    intersections['ca'] = (t,s)
+        fcolors[myMesh.triangles.index(this_triangle)] = 1
 
-    segment = filter(lambda x:intersections[x][1] <= 1 and intersections[x][1] >=0, intersections.keys())
-    segment = max(segment, key=lambda x: intersections[x][0])
-    point_of_intersection = startpoint + intersections[segment][0]*direction
-    _theta = np.concatenate((_theta, np.linspace(startpoint[0], point_of_intersection[0], 10)))
-    _phi = np.concatenate((_phi, np.linspace(startpoint[1], point_of_intersection[1], 10)))
+        # now figure out the triangle intersection
+        a = np.array(myMesh.vertices[this_triangle[0]])
+        b = np.array(myMesh.vertices[this_triangle[1]])
+        c = np.array(myMesh.vertices[this_triangle[2]])
+        intersections = {}
+        # ab
+        t = np.cross((a-startpoint), (b-a))/np.cross(direction, (b-a))
+        s = np.cross((a-startpoint), direction)/np.cross(direction, (b-a))
+        intersections['ab'] = (t,s)
+        # bc
+        t = np.cross((b-startpoint), (c-b))/np.cross(direction, (c-b))
+        s = np.cross((b-startpoint), direction)/np.cross(direction, (c-b))
+        intersections['bc'] = (t,s)
+        # ca
+        t = np.cross((c-startpoint), (a-c))/np.cross(direction, (a-c))
+        s = np.cross((c-startpoint), direction)/np.cross(direction, (a-c))
+        intersections['ca'] = (t,s)
 
-    pos = point_of_intersection
-    # print pos
-    # print segment
-    if segment=='ab':
-        triangles = filter(lambda x:(this_triangle[0] in x) or (this_triangle[1] in x), myMesh.triangles)
-    elif segment=='bc':
-        triangles = filter(lambda x:(this_triangle[1] in x) or (this_triangle[2] in x), myMesh.triangles)
-    elif segment=='ca':
-        triangles = filter(lambda x:(this_triangle[2] in x) or (this_triangle[0] in x), myMesh.triangles)
+        segment = filter(lambda x:intersections[x][1] <= 1 and intersections[x][1] >=0, intersections.keys())
+        segment = max(segment, key=lambda x: intersections[x][0])
+        point_of_intersection = startpoint + intersections[segment][0]*direction
+        _theta = np.concatenate((_theta, np.linspace(startpoint[0], point_of_intersection[0], 10)))
+        _phi = np.concatenate((_phi, np.linspace(startpoint[1], point_of_intersection[1], 10)))
 
-    # print triangles
-    this_triangle = filter(lambda x:x!=this_triangle, triangles)
-    # print this_triangle
-    this_triangle = filter(lambda x:check_for_incidence(x, point_of_intersection),
-            this_triangle)
+        pos = point_of_intersection
+        # print pos
+        # print segment
+        if segment=='ab':
+            triangles = filter(lambda x:(this_triangle[0] in x) or (this_triangle[1] in x), myMesh.triangles)
+        elif segment=='bc':
+            triangles = filter(lambda x:(this_triangle[1] in x) or (this_triangle[2] in x), myMesh.triangles)
+        elif segment=='ca':
+            triangles = filter(lambda x:(this_triangle[2] in x) or (this_triangle[0] in x), myMesh.triangles)
 
-    if len(this_triangle)==1:
-        this_triangle = this_triangle[0]
-    elif len(this_triangle)>1:
-        print "Error. Too many neighbours"
-        this_triangle = sorted(this_triangle, key=lambda x:return_incidence(x, point_of_intersection))[0]
-        # break
-    else:
-        if not flipped:
-            startpoint = saved_start
-            this_triangle = myMesh.triangles[t_id]
-            direction = -np.copy(saved_direction)
-            covdir = np.copy(covdirn)
-            flipped = True
-            continue
+        # print triangles
+        this_triangle = filter(lambda x:x!=this_triangle, triangles)
+        # print this_triangle
+        this_triangle = filter(lambda x:check_for_incidence(x, point_of_intersection),
+                this_triangle)
+
+        if len(this_triangle)==1:
+            this_triangle = this_triangle[0]
+        elif len(this_triangle)>1:
+            print "Error. Too many neighbours"
+            this_triangle = sorted(this_triangle, key=lambda x:return_incidence(x, point_of_intersection))[0]
+            # break
         else:
-            break
+            if not flipped:
+                startpoint = saved_start
+                this_triangle = myMesh.triangles[t_id]
+                direction = -np.copy(saved_direction)
+                covdir = np.copy(covdirn)
+                flipped = True
+                continue
+            else:
+                break
 
-    startpoint = point_of_intersection
-    covdir[0] = covdir[0] + 5e-4 * 0.5 * covdir[1] * covdir[1]/(startpoint[0]*startpoint[0])
-    covdir = covdir / np.linalg.norm(covdir)
+        startpoint = point_of_intersection
+        covdir[0] = covdir[0] + rate * 0.5 * covdir[1] * covdir[1]/(startpoint[0]*startpoint[0])
+        covdir = covdir / np.linalg.norm(covdir)
 
-    direction[0] = covdir[0]
-    direction[1] = covdir[1]/startpoint[0]
-    direction = direction / np.linalg.norm(direction)
+        direction[0] = covdir[0]
+        direction[1] = covdir[1]/startpoint[0]
+        direction = direction / np.linalg.norm(direction)
 
-# _theta = _theta*np.pi
-# _phi = _phi*2*np.pi
-# _X = 1.05*np.sin(_theta*np.pi)*np.cos(_phi*2*np.pi)
-# _Y = 1.05*np.sin(_theta*np.pi)*np.sin(_phi*2*np.pi)
-# _Z = 1.05*np.cos(_theta*np.pi)
-_X = _theta
-_Y = _phi
-_Z = np.ones(len(_theta))*0.5
+    _X = _theta
+    _Y = _phi
+    _Z = np.ones(len(_theta))*0.5
 
-# theta = np.array([vertex[0] for vertex in myMesh.vertices])*np.pi
-# phi = np.array([vertex[1] for vertex in myMesh.vertices])*2*np.pi
-# X = np.sin(theta)*np.cos(phi)
-# Y = np.sin(theta)*np.sin(phi)
-# Z = np.cos(theta) 
-# triangles = np.array([list(triangle) for triangle in myMesh.triangles])
-# ax.plot_trisurf(X,Y,Z,triangles=triangles,color="gray",linewidth=0.2)
-# ax.scatter(_X,_Y,_Z, color="red", s=1)
+    global first_time
+    if first_time:
+        X = np.array([vertex[0] for vertex in myMesh.vertices])
+        Y = np.array([vertex[1] for vertex in myMesh.vertices])
+        triangles = np.array([list(triangle) for triangle in myMesh.triangles])
+        ax.tripcolor(X,Y,triangles=triangles, facecolors=fcolors, edgecolors='k', cmap='binary')
+        first_time = False
+    ax.scatter(_X, _Y, color=pcol, s=0.2)
 
-X = np.array([vertex[0] for vertex in myMesh.vertices])
-Y = np.array([vertex[1] for vertex in myMesh.vertices])
-# Z = np.zeros(len(X))
-triangles = np.array([list(triangle) for triangle in myMesh.triangles])
-# ax.plot_trisurf(X,Y,Z,triangles=triangles,shade=True,color="gray",linewidth=1)
-ax.tripcolor(X,Y,triangles=triangles, facecolors=fcolors, edgecolors='k', cmap='binary')
-# ax.scatter(_X,_Y,_Z,color="red",s=0.2)
-
-ax.scatter(_X, _Y, color="red", s=0.2)
-
-# print _X
-# print _Y
-
+do_iteration()
+do_iteration(rate=2.5e-4,pcol="orangered")
+do_iteration(rate=5e-4,pcol="yellow")
+do_iteration(rate=7.5e-4,pcol="wheat")
+do_iteration(rate=1e-3,pcol="darkolivegreen")
+do_iteration(rate=2.5e-3,pcol="limegreen")
+do_iteration(rate=5e-3,pcol="mediumblue")
+do_iteration(rate=7.5e-3,pcol="indigo")
+do_iteration(rate=1e-2,pcol="purple")
 
 plt.show()
 
