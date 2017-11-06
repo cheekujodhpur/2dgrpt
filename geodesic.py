@@ -41,15 +41,15 @@ def return_incidence(triangle, point_of_intersection):
 # Functions for integration
 def f(t, y):
     dy_0 = y[2]
-    dy_1 = y[3]*np.sin(np.pi*y[0])**2
-    dy_2 = -0.5*np.sin(2*np.pi*y[0])*(y[3]**2)
+    dy_1 = y[3]/(np.sin(np.pi*y[0])**2)
+    dy_2 = (y[3]**2)*np.cos(np.pi*y[0])/(np.sin(np.pi*y[0])**2)
     dy_3 = 0
     return np.array([dy_0, dy_1, dy_2, dy_3])
 
 def jac(t, y):
     r1 = np.array([0, 0, 1, 0])
-    r2 = np.array([np.sin(2*np.pi*y[0])*y[3], 0, 0, np.sin(np.pi*y[0])**2])
-    r3 = np.array([-np.cos(2*np.pi*y[0])*(y[3]**2), 0, 0, -y[3]*np.sin(2*np.pi*y[0])])
+    r2 = np.array([-2*y[3]*np.cos(np.pi*y[0])/(np.sin(np.pi*y[0])**3), 0, 0, 1/(np.sin(np.pi*y[0])**2)])
+    r3 = np.array([-(y[3]**2)*(1+(np.cos(np.pi*y[0])**2))/(np.sin(np.pi*y[0])**3), 0, 0, 2*y[3]*np.cos(np.pi*y[0])/(np.sin(np.pi*y[0])**2)])
     r4 = np.array([0,0,0,0])
     return np.array([r1,r2,r3,r4])
 
@@ -75,7 +75,9 @@ startpoint = random_point(
         myMesh.vertices[this_triangle[2]]
         )
 
-direction[1] = direction[1]*(np.sin(np.pi*startpoint[0])**2)
+covdir = np.copy(direction)
+
+direction[1] = direction[1]/(np.sin(np.pi*startpoint[0])**2)
 direction = direction / np.linalg.norm(direction)
 
 saved_start = startpoint[:]
@@ -84,6 +86,8 @@ saved_direction = np.copy(direction)
 print t_id, saved_start, saved_direction
 
 flipped = False
+
+covdirn = -np.copy(covdir)
 
 while True:
 
@@ -142,13 +146,18 @@ while True:
             startpoint = saved_start
             this_triangle = myMesh.triangles[t_id]
             direction = -np.copy(saved_direction)
+            covdir = np.copy(covdirn)
             flipped = True
             continue
         else:
             break
 
     startpoint = point_of_intersection
-    direction[0] = direction[0] - 1e-2 * 0.5* np.sin(2*startpoint[0]*np.pi)  * direction[1] * direction[1]
+    covdir[0] = covdir[0] + 1e-2 * (covdir[1]**2)*np.cos(np.pi*startpoint[0])/(np.sin(np.pi*startpoint[0])**2)
+    covdir = covdir / np.linalg.norm(covdir)
+
+    direction[0] = covdir[0]
+    direction[1] = covdir[1]/(np.sin(np.pi*startpoint[0])**2)
     direction = direction / np.linalg.norm(direction)
 
 # _theta = _theta*np.pi
