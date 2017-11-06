@@ -41,16 +41,16 @@ def return_incidence(triangle, point_of_intersection):
 # Functions for integration
 def f(t, y):
     dy_0 = y[2]
-    dy_1 = y[0]*y[3]
+    dy_1 = y[3]/y[0]
     # dy_2 = -0.5*y[0]*(y[3]**2)
-    dy_2 = -0.5*(y[3]**2)
+    dy_2 = 0.5*(y[3]**2)/(y[0]**2)
     dy_3 = 0
     return np.array([dy_0, dy_1, dy_2, dy_3])
 
 def jac(t, y):
     r1 = np.array([0, 0, 1, 0])
-    r2 = np.array([1, 0, 0, 1])
-    r3 = np.array([0, 0, 0, -y[3]])
+    r2 = np.array([-y[3]/(y[0]*y[0]), 0, 0, 1/y[0]])
+    r3 = np.array([-y[3]*y[3]/(y[0]**3), 0, 0, y[3]/(y[0]**2)])
     r4 = np.array([0,0,0,0])
     return np.array([r1,r2,r3,r4])
 
@@ -76,9 +76,11 @@ startpoint = random_point(
         myMesh.vertices[this_triangle[2]]
         )
 
+covdir = np.copy(direction)
+
 # This is the covariant direction, I have to correct it to contravariant direction
 direction[0] = direction[0]
-direction[1] = direction[1]*startpoint[0]
+direction[1] = direction[1]/startpoint[0]
 direction = direction / np.linalg.norm(direction)
 
 saved_start = startpoint[:]
@@ -172,6 +174,8 @@ direction = np.copy(saved_direction)
 # coloring faces
 fcolors = np.zeros(num_triangle)
 
+covdirn = -np.copy(covdir)
+
 while True:
 
     start_points.append(startpoint)
@@ -235,13 +239,18 @@ while True:
             startpoint = saved_start
             this_triangle = myMesh.triangles[t_id]
             direction = -np.copy(saved_direction)
+            covdir = np.copy(covdirn)
             flipped = True
             continue
         else:
             break
 
     startpoint = point_of_intersection
-    direction[0] = direction[0] - 1e-4 * 0.5 * direction[1] * direction[1]
+    covdir[0] = covdir[0] + 5e-4 * 0.5 * covdir[1] * covdir[1]/(startpoint[0]*startpoint[0])
+    covdir = covdir / np.linalg.norm(covdir)
+
+    direction[0] = covdir[0]
+    direction[1] = covdir[1]/startpoint[0]
     direction = direction / np.linalg.norm(direction)
 
 # _theta = _theta*np.pi
