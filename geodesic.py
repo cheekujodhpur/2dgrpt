@@ -75,6 +75,9 @@ startpoint = random_point(
         myMesh.vertices[this_triangle[2]]
         )
 
+direction[1] = direction[1]*(np.sin(np.pi*startpoint[0])**2)
+direction = direction / np.linalg.norm(direction)
+
 saved_start = startpoint[:]
 saved_direction = np.copy(direction)
 
