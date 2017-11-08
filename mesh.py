@@ -79,7 +79,8 @@ class Mesh:
                 area = self.calculateArea(p1,p2,p3)
                 # TODO: replace this by determinantof metric
                 # sint = np.sin(center[0]*np.pi)
-                measure = area/(np.sqrt(center[0]))
+                # measure = area/(np.sqrt(center[0]))
+                measure = area*(np.sqrt(center[0]))
                 # call this 1e-2 `scale*scale`, scale=1e-1
                 # relevance will be clear later
                 if measure < 1e-4:
