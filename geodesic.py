@@ -55,7 +55,7 @@ def jac(t, y):
     return np.array([r1,r2,r3,r4])
 
 
-myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
+myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
 myMesh.submesh(6)
 num_triangle = len(myMesh.triangles)
 
@@ -92,12 +92,14 @@ from mpl_toolkits.mplot3d import Axes3D
 fig = plt.figure()
 # ax = fig.add_subplot(111, projection='3d')
 ax = fig.add_subplot(111)
-ax.set_xlim([0,1])
-ax.set_ylim([0,1])
+ax.set_xlabel("x")
+ax.set_ylabel("y")
+ax.set_xlim([0,5])
+ax.set_ylim([0,5])
 # ax.set_zlim([0,1])
 plt.hold(True)
 
-t = np.linspace(0,1,1000)
+t = np.linspace(0,5,1000)
 
 ##########
 # ODEINT #
@@ -106,8 +108,8 @@ from scipy.integrate import ode
 myOde = ode(f, jac).set_integrator("dopri5")
 y0 = np.array([saved_start[0], saved_start[1], saved_direction[0], saved_direction[1]])
 myOde.set_initial_value(y0,0)
-t1 = 1
-dt = 1/1000.
+t1 = 5
+dt = 5/1000.
 
 ode_pc = 0
 
@@ -123,15 +125,15 @@ result = np.array(result)
 # _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
 # _Z = 1.05*np.cos(result[:,0]*np.pi) 
 # ax.plot(_X, _Y,_Z, color="blue")
-ax.plot(result[:,0], result[:,1], color="blue", linewidth=5)
+ax.plot(result[:,0], result[:,1], color="black", linewidth=3)
 # result = np.concatenate((result,odeint(dy_dt, y0, t)))
 # plot the opposite direction with a different color
 
 myOde2 = ode(f, jac).set_integrator("dopri5")
 y0 = np.array([saved_start[0], saved_start[1], -saved_direction[0], -saved_direction[1]])
 myOde2.set_initial_value(y0,0)
-t1 = 1
-dt = 1/1000.
+t1 = 5
+dt = 5/1000.
 
 result = []
 while myOde2.successful() and myOde2.t < t1:
@@ -143,7 +145,7 @@ result = np.array(result)
 # _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
 # _Z = 1.05*np.cos(result[:,0]*np.pi) 
 # ax.plot(_X, _Y, _Z, color="green")
-ax.plot(result[:,0], result[:,1], color="green", linewidth=5)
+ax.plot(result[:,0], result[:,1], color="black", linewidth=3)
 ##########
 # ODEINT #
 ##########
@@ -156,7 +158,7 @@ ax.plot(result[:,0], result[:,1], color="green", linewidth=5)
 # ax.plot(iX, iY, color='black')
 
 first_time = True
-def do_iteration(rate=1e-4,pcol="red"):
+def do_iteration(rate=1e-4,pcol="black"):
 
     _theta = np.array([])
     _phi = np.array([])
@@ -258,19 +260,33 @@ def do_iteration(rate=1e-4,pcol="red"):
         X = np.array([vertex[0] for vertex in myMesh.vertices])
         Y = np.array([vertex[1] for vertex in myMesh.vertices])
         triangles = np.array([list(triangle) for triangle in myMesh.triangles])
-        ax.tripcolor(X,Y,triangles=triangles, facecolors=fcolors, edgecolors='k', cmap='binary')
+        ax.tripcolor(X,Y,triangles=triangles, facecolors=np.zeros(num_triangle), edgecolors='k', cmap='binary')
         first_time = False
-    ax.scatter(_X, _Y, color=pcol, s=0.2)
+    ax.scatter(_X, _Y, color=pcol, s=0.1)
 
 do_iteration()
 do_iteration(rate=2.5e-4,pcol="orangered")
-do_iteration(rate=5e-4,pcol="yellow")
-do_iteration(rate=7.5e-4,pcol="wheat")
-do_iteration(rate=1e-3,pcol="darkolivegreen")
-do_iteration(rate=2.5e-3,pcol="limegreen")
-do_iteration(rate=5e-3,pcol="mediumblue")
-do_iteration(rate=7.5e-3,pcol="indigo")
+do_iteration(rate=5e-4,pcol="orange")
+do_iteration(rate=7.5e-4,pcol="yellow")
+do_iteration(rate=1e-3,pcol="green")
+do_iteration(rate=2.5e-3,pcol="blue")
+do_iteration(rate=5e-3,pcol="indigo")
+do_iteration(rate=7.5e-3,pcol="violet")
 do_iteration(rate=1e-2,pcol="purple")
+
+import matplotlib.patches as mpatches
+
+red_patch = mpatches.Patch(color='red', label='1e-4')
+orangered_patch = mpatches.Patch(color='orangered', label='2.5e-4')
+orange_patch = mpatches.Patch(color='orange', label='5e-4')
+yellow_patch = mpatches.Patch(color='yellow', label='7.5e-4')
+green_patch = mpatches.Patch(color='green', label='1e-3')
+blue_patch = mpatches.Patch(color='blue', label='2.5e-3')
+indigo_patch = mpatches.Patch(color='indigo', label='5e-3')
+violet_patch = mpatches.Patch(color='violet', label='7.5e-3')
+purple_patch = mpatches.Patch(color='purple', label='1e-2')
+plt.legend(title="rate", handles=[red_patch,orangered_patch,orange_patch,yellow_patch,\
+        green_patch,blue_patch,indigo_patch,violet_patch,purple_patch])
 
 plt.show()
 
