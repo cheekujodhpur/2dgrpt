@@ -94,30 +94,49 @@ plt.hold(True)
 t = np.linspace(0,5,1000)
 
 from scipy.integrate import ode
+
 myOde = ode(f, jac).set_integrator("dopri5")
 y0 = np.array([saved_start[0], saved_start[1], saved_direction[0], saved_direction[1]])
 myOde.set_initial_value(y0,0)
 t1 = 5
 dt = 5/1000.
-
 result = []
 while myOde.successful() and myOde.t < t1:
     result.append(myOde.integrate(myOde.t+dt))
-
 result = np.array(result)
-ax.plot(result[:,0], result[:,1], color="black", linewidth=3)
+ax.plot(result[:,0], result[:,1], color="orange", linewidth=2)
 
 myOde2 = ode(f, jac).set_integrator("dopri5")
 y0 = np.array([saved_start[0], saved_start[1], -saved_direction[0], -saved_direction[1]])
 myOde2.set_initial_value(y0,0)
 t1 = 5
 dt = 5/1000.
-
 result = []
 while myOde2.successful() and myOde2.t < t1:
     result.append(myOde2.integrate(myOde2.t+dt))
-
 result = np.array(result)
-ax.plot(result[:,0], result[:,1], color="black", linewidth=3)
+ax.plot(result[:,0], result[:,1], color="orange", linewidth=2)
+
+myOde3 = ode(f, jac).set_integrator("dopri5")
+y0 = np.array([saved_start[0], saved_start[1], saved_direction[0], saved_direction[1]])
+myOde3.set_initial_value(y0,0)
+t1 = 5
+dt = 5/1000.
+result = []
+while myOde3.successful() and myOde3.t < t1:
+    result.append(myOde3.integrate(myOde3.t+500*dt))
+result = np.array(result)
+ax.plot(result[:,0], result[:,1], color="green", linewidth=2)
+
+myOde4 = ode(f, jac).set_integrator("dopri5")
+y0 = np.array([saved_start[0], saved_start[1], -saved_direction[0], -saved_direction[1]])
+myOde4.set_initial_value(y0,0)
+t1 = 5
+dt = 5/1000.
+result = []
+while myOde4.successful() and myOde4.t < t1:
+    result.append(myOde4.integrate(myOde4.t+500*dt))
+result = np.array(result)
+ax.plot(result[:,0], result[:,1], color="green", linewidth=2)
 
 plt.show()
