@@ -59,25 +59,30 @@ myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
 myMesh.submesh(6)
 num_triangle = len(myMesh.triangles)
 
+
 # find start point in a random triangle
-t_id = int(np.random.random()*num_triangle) #triangle_id
+#t_id = int(np.random.random()*num_triangle) #triangle_id
+t_id = 901
 this_triangle = myMesh.triangles[t_id]
 
-direction = np.array((np.random.random(), np.random.random()))
-# direction = np.array((0.0,1.0))
-direction = direction / np.linalg.norm(direction)
+# direction = np.array((np.random.random(), np.random.random()))
+# # direction = np.array((0.0,1.0))
+# direction = direction / np.linalg.norm(direction)
+# 
+# startpoint = random_point(
+#         myMesh.vertices[this_triangle[0]],
+#         myMesh.vertices[this_triangle[1]],
+#         myMesh.vertices[this_triangle[2]]
+#         )
+# 
+# 
+# # This is the covariant direction, I have to correct it to contravariant direction
+# direction[0] = direction[0]
+# direction[1] = direction[1]/startpoint[0]
+# direction = direction / np.linalg.norm(direction)
 
-startpoint = random_point(
-        myMesh.vertices[this_triangle[0]],
-        myMesh.vertices[this_triangle[1]],
-        myMesh.vertices[this_triangle[2]]
-        )
-
-
-# This is the covariant direction, I have to correct it to contravariant direction
-direction[0] = direction[0]
-direction[1] = direction[1]/startpoint[0]
-direction = direction / np.linalg.norm(direction)
+startpoint = np.array([3.80258409, 3.43365924])
+direction = np.array([0.97936069, 0.20212036])
 
 saved_start = startpoint[:]
 saved_direction = np.copy(direction)
@@ -99,6 +104,11 @@ ax.set_ylim([0,5])
 # ax.set_zlim([0,1])
 plt.hold(True)
 
+import time
+time_ode = 0
+time_mesh = 0
+
+st = time.time()
 t = np.linspace(0,5,1000)
 
 ##########
@@ -125,6 +135,8 @@ result = np.array(result)
 # _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
 # _Z = 1.05*np.cos(result[:,0]*np.pi) 
 # ax.plot(_X, _Y,_Z, color="blue")
+time_ode = time_ode + time.time() - st
+st = time.time()
 ax.plot(result[:,0], result[:,1], color="black", linewidth=3)
 # result = np.concatenate((result,odeint(dy_dt, y0, t)))
 # plot the opposite direction with a different color
@@ -145,6 +157,7 @@ result = np.array(result)
 # _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
 # _Z = 1.05*np.cos(result[:,0]*np.pi) 
 # ax.plot(_X, _Y, _Z, color="green")
+time_ode = time_ode + time.time() - st
 ax.plot(result[:,0], result[:,1], color="black", linewidth=3)
 ##########
 # ODEINT #
@@ -160,11 +173,12 @@ ax.plot(result[:,0], result[:,1], color="black", linewidth=3)
 first_time = True
 def do_iteration(rate=1e-4,pcol="black"):
 
+    st = time.time()
     _theta = np.array([])
     _phi = np.array([])
 
     startpoint = saved_start[:]
-    direction = np.copy(saved_direction)
+    direction = -np.copy(saved_direction)
 
     # coloring faces
     fcolors = np.zeros(num_triangle)
@@ -251,42 +265,50 @@ def do_iteration(rate=1e-4,pcol="black"):
         direction[1] = covdir[1]/startpoint[0]
         direction = direction / np.linalg.norm(direction)
 
+        if mesh_pc >= 120:
+            break
+
     _X = _theta
     _Y = _phi
     _Z = np.ones(len(_theta))*0.5
 
+    
+    global time_mesh
+    time_mesh = time_mesh + time.time() - st
     global first_time
     if first_time:
         X = np.array([vertex[0] for vertex in myMesh.vertices])
         Y = np.array([vertex[1] for vertex in myMesh.vertices])
         triangles = np.array([list(triangle) for triangle in myMesh.triangles])
-        ax.tripcolor(X,Y,triangles=triangles, facecolors=np.zeros(num_triangle), edgecolors='k', cmap='binary')
+        ax.tripcolor(X,Y,triangles=triangles, facecolors=np.zeros(num_triangle), edgecolors='k', cmap='Blues')
         first_time = False
-    ax.scatter(_X, _Y, color=pcol, s=0.1)
+    ax.scatter(_X, _Y, color=pcol, s=2)
 
-do_iteration()
-do_iteration(rate=2.5e-4,pcol="orangered")
-do_iteration(rate=5e-4,pcol="orange")
-do_iteration(rate=7.5e-4,pcol="yellow")
-do_iteration(rate=1e-3,pcol="green")
-do_iteration(rate=2.5e-3,pcol="blue")
-do_iteration(rate=5e-3,pcol="indigo")
-do_iteration(rate=7.5e-3,pcol="violet")
-do_iteration(rate=1e-2,pcol="purple")
+do_iteration(pcol="green")
+print mesh_pc, ode_pc
+print time_ode, time_mesh
+# do_iteration(rate=2.5e-4,pcol="orangered")
+# do_iteration(rate=5e-4,pcol="orange")
+# do_iteration(rate=7.5e-4,pcol="yellow")
+# do_iteration(rate=1e-3,pcol="green")
+# do_iteration(rate=2.5e-3,pcol="blue")
+# do_iteration(rate=5e-3,pcol="indigo")
+# do_iteration(rate=7.5e-3,pcol="violet")
+# do_iteration(rate=1e-2,pcol="purple")
+# 
+# import matplotlib.patches as mpatches
 
-import matplotlib.patches as mpatches
-
-red_patch = mpatches.Patch(color='red', label='1e-4')
-orangered_patch = mpatches.Patch(color='orangered', label='2.5e-4')
-orange_patch = mpatches.Patch(color='orange', label='5e-4')
-yellow_patch = mpatches.Patch(color='yellow', label='7.5e-4')
-green_patch = mpatches.Patch(color='green', label='1e-3')
-blue_patch = mpatches.Patch(color='blue', label='2.5e-3')
-indigo_patch = mpatches.Patch(color='indigo', label='5e-3')
-violet_patch = mpatches.Patch(color='violet', label='7.5e-3')
-purple_patch = mpatches.Patch(color='purple', label='1e-2')
-plt.legend(title="rate", handles=[red_patch,orangered_patch,orange_patch,yellow_patch,\
-        green_patch,blue_patch,indigo_patch,violet_patch,purple_patch])
+# red_patch = mpatches.Patch(color='red', label='1e-4')
+# orangered_patch = mpatches.Patch(color='orangered', label='2.5e-4')
+# orange_patch = mpatches.Patch(color='orange', label='5e-4')
+# yellow_patch = mpatches.Patch(color='yellow', label='7.5e-4')
+# green_patch = mpatches.Patch(color='green', label='1e-3')
+# blue_patch = mpatches.Patch(color='blue', label='2.5e-3')
+# indigo_patch = mpatches.Patch(color='indigo', label='5e-3')
+# violet_patch = mpatches.Patch(color='violet', label='7.5e-3')
+# purple_patch = mpatches.Patch(color='purple', label='1e-2')
+# plt.legend(title="rate", handles=[red_patch,orangered_patch,orange_patch,yellow_patch,\
+#         green_patch,blue_patch,indigo_patch,violet_patch,purple_patch])
 
 plt.show()
 
