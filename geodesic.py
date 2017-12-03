@@ -1,5 +1,6 @@
 # this is the file where we draw geodescis
 
+import os
 from mesh import Mesh
 import numpy as np
 from scipy.integrate import odeint
@@ -56,33 +57,51 @@ def jac(t, y):
 
 
 myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
-myMesh.submesh(6)
+myMesh.submesh(3)
+myMesh.write_to_poly(k=0.05)
+
+os.system("./triangle -an input.poly")
+
+nodes = open("input.1.node", "r").readlines()
+all_vertices = []
+num_nodes = [int(s) for s in nodes[0].split() if s.isdigit()][0]
+for i in range(num_nodes):
+    node_data = [float(s) for s in nodes[i+1].split() if s.replace('.','',1).isdigit()]
+    all_vertices.append((node_data[1], node_data[2]))
+
+myMesh.vertices = all_vertices
+
+eles = open("input.1.ele", "r").readlines()
+all_triangles = []
+num_eles = [int(s) for s in eles[0].split() if s.isdigit()][0]
+for i in range(num_eles):
+    ele_data = [int(s) for s in eles[i+1].split() if s.isdigit()]
+    all_triangles.append((ele_data[1]-1, ele_data[2]-1, ele_data[3]-1))
+
+myMesh.triangles = all_triangles
+
 num_triangle = len(myMesh.triangles)
 
 
 # find start point in a random triangle
-#t_id = int(np.random.random()*num_triangle) #triangle_id
-t_id = 901
+t_id = int(np.random.random()*num_triangle) #triangle_id
 this_triangle = myMesh.triangles[t_id]
 
-# direction = np.array((np.random.random(), np.random.random()))
-# # direction = np.array((0.0,1.0))
-# direction = direction / np.linalg.norm(direction)
-# 
-# startpoint = random_point(
-#         myMesh.vertices[this_triangle[0]],
-#         myMesh.vertices[this_triangle[1]],
-#         myMesh.vertices[this_triangle[2]]
-#         )
-# 
-# 
-# # This is the covariant direction, I have to correct it to contravariant direction
-# direction[0] = direction[0]
-# direction[1] = direction[1]/startpoint[0]
-# direction = direction / np.linalg.norm(direction)
+direction = np.array((np.random.random(), np.random.random()))
+# direction = np.array((0.0,1.0))
+direction = direction / np.linalg.norm(direction)
 
-startpoint = np.array([3.80258409, 3.43365924])
-direction = np.array([0.97936069, 0.20212036])
+startpoint = random_point(
+        myMesh.vertices[this_triangle[0]],
+        myMesh.vertices[this_triangle[1]],
+        myMesh.vertices[this_triangle[2]]
+        )
+
+
+# This is the covariant direction, I have to correct it to contravariant direction
+direction[0] = direction[0]
+direction[1] = direction[1]/startpoint[0]
+direction = direction / np.linalg.norm(direction)
 
 saved_start = startpoint[:]
 saved_direction = np.copy(direction)
@@ -137,7 +156,7 @@ result = np.array(result)
 # ax.plot(_X, _Y,_Z, color="blue")
 time_ode = time_ode + time.time() - st
 st = time.time()
-ax.plot(result[:,0], result[:,1], color="black", linewidth=3)
+ax.plot(result[:,0], result[:,1], color="black", linewidth=1)
 # result = np.concatenate((result,odeint(dy_dt, y0, t)))
 # plot the opposite direction with a different color
 
@@ -158,7 +177,7 @@ result = np.array(result)
 # _Z = 1.05*np.cos(result[:,0]*np.pi) 
 # ax.plot(_X, _Y, _Z, color="green")
 time_ode = time_ode + time.time() - st
-ax.plot(result[:,0], result[:,1], color="black", linewidth=3)
+ax.plot(result[:,0], result[:,1], color="black", linewidth=1)
 ##########
 # ODEINT #
 ##########
@@ -265,9 +284,6 @@ def do_iteration(rate=1e-4,pcol="black"):
         direction[1] = covdir[1]/startpoint[0]
         direction = direction / np.linalg.norm(direction)
 
-        if mesh_pc >= 120:
-            break
-
     _X = _theta
     _Y = _phi
     _Z = np.ones(len(_theta))*0.5
@@ -284,7 +300,7 @@ def do_iteration(rate=1e-4,pcol="black"):
         first_time = False
     ax.scatter(_X, _Y, color=pcol, s=2)
 
-do_iteration(pcol="green")
+do_iteration(pcol="green", rate=1e-2)
 print mesh_pc, ode_pc
 print time_ode, time_mesh
 # do_iteration(rate=2.5e-4,pcol="orangered")
