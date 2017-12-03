@@ -107,7 +107,32 @@ class Mesh:
             center = (np.array(self.vertices[striangle[0]]) + np.array(self.vertices[striangle[1]]) + np.array(self.vertices[striangle[2]]))/3.
             g = m.compute_metric(center)
             self.regions.append((center[0], center[1], np.sqrt(np.linalg.det(g))))
+        self.edges = list(self.edges)
+
+
+    def write_to_poly(self, k=1.0):
+        with open("input.poly", "w") as outfile:
+            outfile.write(str(len(self.vertices)))
+            outfile.write(" 2 0 0\n")
             
+            for i in range(len(self.vertices)):
+                outfile.write(str(i+1) + " ")
+                outfile.write(str(self.vertices[i][0]) + " " + \
+                        str(self.vertices[i][1]) + "\n")
+           
+            outfile.write(str(len(self.edges)) + " 0\n")
+            for i in range(len(self.edges)):
+                outfile.write(str(i+1) + " ")
+                outfile.write(str(self.edges[i][0]+1) + " " + \
+                        str(self.edges[i][1]+1) + "\n")
+
+            outfile.write("0\n") # no holes
+            outfile.write(str(len(self.regions)) + "\n")
+            for i in range(len(self.regions)):
+                outfile.write(str(i+1) + " ")
+                outfile.write(str(self.regions[i][0]) + " " + \
+                        str(self.regions[i][1]) + " " + \
+                        str(k*self.regions[i][2]) + "\n")
 
 
 # myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
