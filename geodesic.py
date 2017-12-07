@@ -39,6 +39,10 @@ def return_incidence(triangle, point_of_intersection):
     tre = abs(np.linalg.norm(pos-c) + np.linalg.norm(pos-a) - np.linalg.norm(c-a)) 
     return min(one, two, tre)
 
+def find_closest_edge(ovmesh, pt):
+    #TODO: Implement this function
+    return 0
+
 # Functions for integration
 def f(t, y):
     dy_0 = y[2]
@@ -87,7 +91,35 @@ for i in range(num_neighs):
     neigh_data = [int(s) for s in neighbours[i+1].split() if s.isdigit()]
     neighbours_dict[(neigh_data[0]-1)] = filter(lambda x:x>=0,map(lambda x:x-1, neigh_data[1:]))
 
-myMesh.triangles = all_triangles
+
+# At this point, we hash everything
+# (1x1) -> 64 parts
+overlay_mesh = {}
+for tl in myMesh.triangles:
+    x = int(myMesh.vertices[tl[0]][0]/0.125)
+    y = int(myMesh.vertices[tl[0]][1]/0.125) 
+    if (x,y) not in overlay_mesh:
+        overlay_mesh[(x,y)] = set([])
+    else:
+        overlay_mesh[(x,y)].add((tl[0], tl[1]))
+        overlay_mesh[(x,y)].add((tl[0], tl[2]))
+
+    x = int(myMesh.vertices[tl[1]][0]/0.125)
+    y = int(myMesh.vertices[tl[1]][1]/0.125) 
+    if (x,y) not in overlay_mesh:
+        overlay_mesh[(x,y)] = set([])
+    else:
+        overlay_mesh[(x,y)].add((tl[0], tl[1]))
+        overlay_mesh[(x,y)].add((tl[1], tl[2]))
+
+    x = int(myMesh.vertices[tl[2]][0]/0.125)
+    y = int(myMesh.vertices[tl[2]][1]/0.125) 
+    if (x,y) not in overlay_mesh:
+        overlay_mesh[(x,y)] = set([])
+    else:
+        overlay_mesh[(x,y)].add((tl[2], tl[1]))
+        overlay_mesh[(x,y)].add((tl[0], tl[2]))
+
 
 num_triangle = len(myMesh.triangles)
 
