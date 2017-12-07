@@ -57,8 +57,8 @@ def jac(t, y):
 
 
 myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
-myMesh.submesh(3)
-myMesh.write_to_poly(k=0.05)
+myMesh.submesh(4)
+myMesh.write_to_poly(k=0.005)
 
 os.system("./triangle -an input.poly")
 
@@ -80,8 +80,16 @@ for i in range(num_eles):
 
 myMesh.triangles = all_triangles
 
-num_triangle = len(myMesh.triangles)
+neighbours = open("input.1.neigh", "r").readlines()
+neighbours_dict = {}
+num_neighs = [int(s) for s in eles[0].split() if s.isdigit()][0]
+for i in range(num_neighs):
+    neigh_data = [int(s) for s in neighbours[i+1].split() if s.isdigit()]
+    neighbours_dict[(neigh_data[0]-1)] = filter(lambda x:x>=0,map(lambda x:x-1, neigh_data[1:]))
 
+myMesh.triangles = all_triangles
+
+num_triangle = len(myMesh.triangles)
 
 # find start point in a random triangle
 t_id = int(np.random.random()*num_triangle) #triangle_id
@@ -105,6 +113,7 @@ direction = direction / np.linalg.norm(direction)
 
 saved_start = startpoint[:]
 saved_direction = np.copy(direction)
+stid = t_id
 
 print "triangle id", t_id
 print "start", saved_start
@@ -148,7 +157,6 @@ while myOde.successful() and myOde.t < t1:
     ode_pc = ode_pc + 1
 
 result = np.array(result)
-# print result[:50]
 # result = odeint(dy_dt, y0, t)
 # _X = 1.05*np.sin(result[:,0]*np.pi)*np.cos(result[:,1]*2*np.pi)
 # _Y = 1.05*np.sin(result[:,0]*np.pi)*np.sin(result[:,1]*2*np.pi)
@@ -158,7 +166,6 @@ time_ode = time_ode + time.time() - st
 st = time.time()
 ax.plot(result[:,0], result[:,1], color="black", linewidth=1)
 # result = np.concatenate((result,odeint(dy_dt, y0, t)))
-# plot the opposite direction with a different color
 
 myOde2 = ode(f, jac).set_integrator("dopri5")
 y0 = np.array([saved_start[0], saved_start[1], -saved_direction[0], -saved_direction[1]])
@@ -182,12 +189,6 @@ ax.plot(result[:,0], result[:,1], color="black", linewidth=1)
 # ODEINT #
 ##########
 
-# t = np.linspace(0,1,1000)
-# iX = saved_direction[0]*t - (saved_direction[1]**2)*t*t*0.25 + saved_start[0]
-# iY = saved_direction[0]*saved_direction[1]*t*t*0.5 - (saved_direction[1]**3)*t*t*t*(1/12.) + \
-#         saved_start[0]*saved_direction[1]*t + saved_start[1]
-# 
-# ax.plot(iX, iY, color='black')
 
 first_time = True
 def do_iteration(rate=1e-4,pcol="black"):
@@ -210,6 +211,7 @@ def do_iteration(rate=1e-4,pcol="black"):
     start_points = []
     directions = []
     this_triangle = myMesh.triangles[t_id]
+    global t_id
 
     while True:
 
@@ -244,31 +246,20 @@ def do_iteration(rate=1e-4,pcol="black"):
         _phi = np.concatenate((_phi, np.linspace(startpoint[1], point_of_intersection[1], 10)))
 
         pos = point_of_intersection
-        # print pos
-        # print segment
-        if segment=='ab':
-            triangles = filter(lambda x:(this_triangle[0] in x) or (this_triangle[1] in x), myMesh.triangles)
-        elif segment=='bc':
-            triangles = filter(lambda x:(this_triangle[1] in x) or (this_triangle[2] in x), myMesh.triangles)
-        elif segment=='ca':
-            triangles = filter(lambda x:(this_triangle[2] in x) or (this_triangle[0] in x), myMesh.triangles)
+        t_id = filter(lambda x:check_for_incidence(myMesh.triangles[x], point_of_intersection),
+                neighbours_dict[t_id])
 
-        # print triangles
-        this_triangle = filter(lambda x:x!=this_triangle, triangles)
-        # print this_triangle
-        this_triangle = filter(lambda x:check_for_incidence(x, point_of_intersection),
-                this_triangle)
-
-        if len(this_triangle)==1:
-            this_triangle = this_triangle[0]
-        elif len(this_triangle)>1:
+        if len(t_id)==1:
+            t_id = t_id[0]
+        elif len(t_id)>1:
             print "Error. Too many neighbours"
-            this_triangle = sorted(this_triangle, key=lambda x:return_incidence(x, point_of_intersection))[0]
+            t_id = sorted(t_id, key=lambda x:return_incidence(myMesh.triangles[x], point_of_intersection))[0]
             # break
         else:
             if not flipped:
                 startpoint = saved_start
-                this_triangle = myMesh.triangles[t_id]
+                this_triangle = myMesh.triangles[stid]
+                t_id = stid
                 direction = -np.copy(saved_direction)
                 covdir = np.copy(covdirn)
                 flipped = True
@@ -277,12 +268,17 @@ def do_iteration(rate=1e-4,pcol="black"):
                 break
 
         startpoint = point_of_intersection
+        this_triangle = myMesh.triangles[t_id]
         covdir[0] = covdir[0] + rate * 0.5 * covdir[1] * covdir[1]/(startpoint[0]*startpoint[0])
         covdir = covdir / np.linalg.norm(covdir)
 
         direction[0] = covdir[0]
         direction[1] = covdir[1]/startpoint[0]
         direction = direction / np.linalg.norm(direction)
+
+
+        if mesh_pc>=200:
+            break
 
     _X = _theta
     _Y = _phi
@@ -300,36 +296,10 @@ def do_iteration(rate=1e-4,pcol="black"):
         first_time = False
     ax.scatter(_X, _Y, color=pcol, s=2)
 
-do_iteration(pcol="green", rate=1e-2)
-print mesh_pc, ode_pc
-print time_ode, time_mesh
-# do_iteration(rate=2.5e-4,pcol="orangered")
-# do_iteration(rate=5e-4,pcol="orange")
-# do_iteration(rate=7.5e-4,pcol="yellow")
-# do_iteration(rate=1e-3,pcol="green")
-# do_iteration(rate=2.5e-3,pcol="blue")
-# do_iteration(rate=5e-3,pcol="indigo")
-# do_iteration(rate=7.5e-3,pcol="violet")
-# do_iteration(rate=1e-2,pcol="purple")
-# 
-# import matplotlib.patches as mpatches
-
-# red_patch = mpatches.Patch(color='red', label='1e-4')
-# orangered_patch = mpatches.Patch(color='orangered', label='2.5e-4')
-# orange_patch = mpatches.Patch(color='orange', label='5e-4')
-# yellow_patch = mpatches.Patch(color='yellow', label='7.5e-4')
-# green_patch = mpatches.Patch(color='green', label='1e-3')
-# blue_patch = mpatches.Patch(color='blue', label='2.5e-3')
-# indigo_patch = mpatches.Patch(color='indigo', label='5e-3')
-# violet_patch = mpatches.Patch(color='violet', label='7.5e-3')
-# purple_patch = mpatches.Patch(color='purple', label='1e-2')
-# plt.legend(title="rate", handles=[red_patch,orangered_patch,orange_patch,yellow_patch,\
-#         green_patch,blue_patch,indigo_patch,violet_patch,purple_patch])
+do_iteration(pcol="green", rate=1e-3)
 
 plt.show()
 
 print "mesh size", len(myMesh.triangles)
-print "computation save", mesh_pc/float(ode_pc)
+print "computation save", time_mesh/float(time_ode)
 
-# print "start points\n", start_points
-# print "directions\n", directions
