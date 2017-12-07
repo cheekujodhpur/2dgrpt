@@ -39,9 +39,23 @@ def return_incidence(triangle, point_of_intersection):
     tre = abs(np.linalg.norm(pos-c) + np.linalg.norm(pos-a) - np.linalg.norm(c-a)) 
     return min(one, two, tre)
 
-def find_closest_edge(ovmesh, pt):
-    #TODO: Implement this function
-    return 0
+def find_closest_edge(ovmesh, pt, vertices):
+    x = int(pt[0]/0.125)
+    y = int(pt[1]/0.125) 
+    if (x,y) not in ovmesh:
+        return -1, 0
+    distance = 10000
+    minEdge = (0,0)
+    for edge in ovmesh[(x,y)]:
+        a = np.array(vertices[edge[0]])
+        b = np.array(vertices[edge[1]])
+        dist = abs(np.linalg.norm(pt-a) + np.linalg.norm(pt-b) - np.linalg.norm(a-b)) 
+        if dist < distance:
+            distance = dist
+            minEdge = edge
+
+    return minEdge, distance
+        
 
 # Functions for integration
 def f(t, y):
@@ -61,8 +75,8 @@ def jac(t, y):
 
 
 myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
-myMesh.submesh(4)
-myMesh.write_to_poly(k=0.005)
+myMesh.submesh(3)
+myMesh.write_to_poly(k=0.05)
 
 os.system("./triangle -an input.poly")
 
@@ -153,6 +167,7 @@ print "direction", saved_direction
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 from mpl_toolkits.mplot3d import Axes3D
 fig = plt.figure()
 # ax = fig.add_subplot(111, projection='3d')
@@ -185,6 +200,12 @@ ode_pc = 0
 
 result = []
 while myOde.successful() and myOde.t < t1:
+    if result:
+        xx, dist = find_closest_edge(overlay_mesh, np.array(result[-1][:2]), myMesh.vertices)
+        if xx != -1:
+            l = Line2D([myMesh.vertices[xx[0]][0],myMesh.vertices[xx[1]][0]], \
+                    [myMesh.vertices[xx[0]][1],myMesh.vertices[xx[1]][1]], lw=2)
+            ax.add_line(l)
     result.append(myOde.integrate(myOde.t+dt))
     ode_pc = ode_pc + 1
 
@@ -207,6 +228,12 @@ dt = 5/1000.
 
 result = []
 while myOde2.successful() and myOde2.t < t1:
+    if result:
+        xx, dist = find_closest_edge(overlay_mesh, np.array(result[-1][:2]), myMesh.vertices)
+        if xx != -1:
+            l = Line2D([myMesh.vertices[xx[0]][0],myMesh.vertices[xx[1]][0]], \
+                    [myMesh.vertices[xx[0]][1],myMesh.vertices[xx[1]][1]], lw=2)
+            ax.add_line(l)
     result.append(myOde2.integrate(myOde2.t+dt))
     ode_pc = ode_pc + 1
 # result2 = odeint(dy_dt, y0, t)
@@ -308,9 +335,6 @@ def do_iteration(rate=1e-4,pcol="black"):
         direction[1] = covdir[1]/startpoint[0]
         direction = direction / np.linalg.norm(direction)
 
-
-        if mesh_pc>=200:
-            break
 
     _X = _theta
     _Y = _phi
