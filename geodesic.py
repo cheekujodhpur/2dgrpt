@@ -78,7 +78,7 @@ myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
 myMesh.submesh(3)
 myMesh.write_to_poly(k=0.05)
 
-os.system("./triangle -an input.poly")
+os.system("./triangle -an -q18 input.poly")
 
 nodes = open("input.1.node", "r").readlines()
 all_vertices = []
