@@ -177,7 +177,6 @@ ax.set_ylabel("y")
 ax.set_xlim([0,5])
 ax.set_ylim([0,5])
 # ax.set_zlim([0,1])
-plt.hold(True)
 
 import time
 time_ode = 0
@@ -269,8 +268,8 @@ def do_iteration(rate=1e-4,pcol="black"):
     flipped = False
     start_points = []
     directions = []
-    this_triangle = myMesh.triangles[t_id]
     global t_id
+    this_triangle = myMesh.triangles[t_id]
 
     while True:
 
