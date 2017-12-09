@@ -12,6 +12,8 @@ class Mesh:
     """
     vertices = [] # the list of vertices, each a tuple, 2-tuple
     triangles = [] # 3-tuples of ids of vertices making a triangle
+    edges = set([]) # 2-tuples holding ids of vertices which are edges
+    regions = []
     metric = None
     neighbours = {}
 
@@ -68,24 +70,6 @@ class Mesh:
                 p2 = ((self.vertices[triangle[1]][0] + self.vertices[triangle[2]][0])/2.,(self.vertices[triangle[1]][1] + self.vertices[triangle[2]][1])/2.)
                 p3 = ((self.vertices[triangle[2]][0] + self.vertices[triangle[0]][0])/2.,(self.vertices[triangle[2]][1] + self.vertices[triangle[0]][1])/2.)
 
-                center = tuple(np.mean(np.array(map(lambda x:np.array(self.vertices[x]),triangle)),axis=0))
-
-                three_metrics = np.array([m.compute_metric(p1), m.compute_metric(p2), m.compute_metric(p3)])
-                diff = np.linalg.norm(three_metrics.std(0))
-                # mean_metric = np.mean(three_metrics, axis=0)
-                # center_metric = m.compute_metric(center)
-                # diff = np.linalg.norm(mean_metric-center_metric) 
-
-                area = self.calculateArea(p1,p2,p3)
-                # TODO: replace this by determinantof metric
-                # sint = np.sin(center[0]*np.pi)
-                # measure = area/(np.sqrt(center[0]))
-                measure = area*(np.sqrt(center[0]))
-                # call this 1e-2 `scale*scale`, scale=1e-1
-                # relevance will be clear later
-                if measure < 25e-4:
-                    newTriangles.append(triangle)
-                    continue
 
                 if self.vertices.count(p1) > 0:
                     i1 = self.vertices.index(p1)
@@ -114,6 +98,41 @@ class Mesh:
                 newTriangles.append((i3,triangle[0],i1))
 
             self.triangles = newTriangles
+
+        for triangle in self.triangles:
+            striangle = sorted(triangle)
+            self.edges.add((striangle[0], striangle[1]))
+            self.edges.add((striangle[1], striangle[2]))
+            self.edges.add((striangle[0], striangle[2]))
+            center = (np.array(self.vertices[striangle[0]]) + np.array(self.vertices[striangle[1]]) + np.array(self.vertices[striangle[2]]))/3.
+            g = m.compute_metric(center, t="a1")
+            self.regions.append((center[0], center[1], np.sqrt(np.linalg.det(g))))
+        self.edges = list(self.edges)
+
+
+    def write_to_poly(self, k=1.0):
+        with open("input.poly", "w") as outfile:
+            outfile.write(str(len(self.vertices)))
+            outfile.write(" 2 0 0\n")
+            
+            for i in range(len(self.vertices)):
+                outfile.write(str(i+1) + " ")
+                outfile.write(str(self.vertices[i][0]) + " " + \
+                        str(self.vertices[i][1]) + "\n")
+           
+            outfile.write(str(len(self.edges)) + " 0\n")
+            for i in range(len(self.edges)):
+                outfile.write(str(i+1) + " ")
+                outfile.write(str(self.edges[i][0]+1) + " " + \
+                        str(self.edges[i][1]+1) + "\n")
+
+            outfile.write("0\n") # no holes
+            outfile.write(str(len(self.regions)) + "\n")
+            for i in range(len(self.regions)):
+                outfile.write(str(i+1) + " ")
+                outfile.write(str(self.regions[i][0]) + " " + \
+                        str(self.regions[i][1]) + " " + \
+                        str(k*self.regions[i][2]) + "\n")
 
 
 # myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
