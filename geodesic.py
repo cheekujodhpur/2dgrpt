@@ -6,8 +6,6 @@ import numpy as np
 from scipy.integrate import odeint
 from helpers import *
 
-
-
 # Functions for integration
 def f(t, y):
     dy_0 = y[2]
@@ -28,63 +26,7 @@ def jac(t, y):
 myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
 myMesh.submesh(3)
 myMesh.write_to_poly(k=0.05)
-
-os.system("./triangle -an -q18 input.poly")
-
-nodes = open("input.1.node", "r").readlines()
-all_vertices = []
-num_nodes = [int(s) for s in nodes[0].split() if s.isdigit()][0]
-for i in range(num_nodes):
-    node_data = [float(s) for s in nodes[i+1].split() if s.replace('.','',1).isdigit()]
-    all_vertices.append((node_data[1], node_data[2]))
-
-myMesh.vertices = all_vertices
-
-eles = open("input.1.ele", "r").readlines()
-all_triangles = []
-num_eles = [int(s) for s in eles[0].split() if s.isdigit()][0]
-for i in range(num_eles):
-    ele_data = [int(s) for s in eles[i+1].split() if s.isdigit()]
-    all_triangles.append((ele_data[1]-1, ele_data[2]-1, ele_data[3]-1))
-
-myMesh.triangles = all_triangles
-
-neighbours = open("input.1.neigh", "r").readlines()
-neighbours_dict = {}
-num_neighs = [int(s) for s in eles[0].split() if s.isdigit()][0]
-for i in range(num_neighs):
-    neigh_data = [int(s) for s in neighbours[i+1].split() if s.isdigit()]
-    neighbours_dict[(neigh_data[0]-1)] = filter(lambda x:x>=0,map(lambda x:x-1, neigh_data[1:]))
-
-
-# At this point, we hash everything
-# (1x1) -> 64 parts
-overlay_mesh = {}
-for tl in myMesh.triangles:
-    x = int(myMesh.vertices[tl[0]][0]/0.125)
-    y = int(myMesh.vertices[tl[0]][1]/0.125) 
-    if (x,y) not in overlay_mesh:
-        overlay_mesh[(x,y)] = set([])
-    else:
-        overlay_mesh[(x,y)].add((tl[0], tl[1]))
-        overlay_mesh[(x,y)].add((tl[0], tl[2]))
-
-    x = int(myMesh.vertices[tl[1]][0]/0.125)
-    y = int(myMesh.vertices[tl[1]][1]/0.125) 
-    if (x,y) not in overlay_mesh:
-        overlay_mesh[(x,y)] = set([])
-    else:
-        overlay_mesh[(x,y)].add((tl[0], tl[1]))
-        overlay_mesh[(x,y)].add((tl[1], tl[2]))
-
-    x = int(myMesh.vertices[tl[2]][0]/0.125)
-    y = int(myMesh.vertices[tl[2]][1]/0.125) 
-    if (x,y) not in overlay_mesh:
-        overlay_mesh[(x,y)] = set([])
-    else:
-        overlay_mesh[(x,y)].add((tl[2], tl[1]))
-        overlay_mesh[(x,y)].add((tl[0], tl[2]))
-
+myMesh.refine_using_Triangle(18, 0.125)
 
 num_triangle = len(myMesh.triangles)
 
@@ -151,7 +93,7 @@ ode_pc = 0
 result = []
 while myOde.successful() and myOde.t < t1:
     if result:
-        xx, dist = find_closest_edge(overlay_mesh, np.array(result[-1][:2]), myMesh.vertices)
+        xx, dist = find_closest_edge(myMesh.overlay_mesh, np.array(result[-1][:2]), myMesh.vertices)
         if xx != -1:
             l = Line2D([myMesh.vertices[xx[0]][0],myMesh.vertices[xx[1]][0]], \
                     [myMesh.vertices[xx[0]][1],myMesh.vertices[xx[1]][1]], lw=2)
@@ -179,7 +121,7 @@ dt = 5/1000.
 result = []
 while myOde2.successful() and myOde2.t < t1:
     if result:
-        xx, dist = find_closest_edge(overlay_mesh, np.array(result[-1][:2]), myMesh.vertices)
+        xx, dist = find_closest_edge(myMesh.overlay_mesh, np.array(result[-1][:2]), myMesh.vertices)
         if xx != -1:
             l = Line2D([myMesh.vertices[xx[0]][0],myMesh.vertices[xx[1]][0]], \
                     [myMesh.vertices[xx[0]][1],myMesh.vertices[xx[1]][1]], lw=2)
@@ -256,7 +198,7 @@ def do_iteration(rate=1e-4,pcol="black"):
 
         pos = point_of_intersection
         t_id = filter(lambda x:check_for_incidence(myMesh.vertices, myMesh.triangles[x], point_of_intersection, 1e-4),
-                neighbours_dict[t_id])
+                myMesh.neighbours[t_id])
 
         if len(t_id)==1:
             t_id = t_id[0]
