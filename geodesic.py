@@ -123,9 +123,8 @@ while myOde2.successful() and myOde2.t < t1:
     if result:
         xx, dist = find_closest_edge(myMesh.overlay_mesh, np.array(result[-1][:2]), myMesh.vertices)
         if xx != -1:
-            l = Line2D([myMesh.vertices[xx[0]][0],myMesh.vertices[xx[1]][0]], \
-                    [myMesh.vertices[xx[0]][1],myMesh.vertices[xx[1]][1]], lw=2)
-            ax.add_line(l)
+            ax.add_line(Line2D([myMesh.vertices[xx[0]][0],myMesh.vertices[xx[1]][0]], \
+                    [myMesh.vertices[xx[0]][1],myMesh.vertices[xx[1]][1]], lw=1))
     result.append(myOde2.integrate(myOde2.t+dt))
     ode_pc = ode_pc + 1
 # result2 = odeint(dy_dt, y0, t)
@@ -145,8 +144,6 @@ first_time = True
 def do_iteration(rate=1e-4,pcol="black"):
 
     st = time.time()
-    _theta = np.array([])
-    _phi = np.array([])
 
     startpoint = saved_start[:]
     direction = -np.copy(saved_direction)
@@ -193,8 +190,8 @@ def do_iteration(rate=1e-4,pcol="black"):
         segment = filter(lambda x:intersections[x][1] <= 1 and intersections[x][1] >=0, intersections.keys())
         segment = max(segment, key=lambda x: intersections[x][0])
         point_of_intersection = startpoint + intersections[segment][0]*direction
-        _theta = np.concatenate((_theta, np.linspace(startpoint[0], point_of_intersection[0], 10)))
-        _phi = np.concatenate((_phi, np.linspace(startpoint[1], point_of_intersection[1], 10)))
+        ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
+                    ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
 
         pos = point_of_intersection
         t_id = filter(lambda x:check_for_incidence(myMesh.vertices, myMesh.triangles[x], point_of_intersection, 1e-4),
@@ -227,12 +224,6 @@ def do_iteration(rate=1e-4,pcol="black"):
         direction[1] = covdir[1]/startpoint[0]
         direction = direction / np.linalg.norm(direction)
 
-
-    _X = _theta
-    _Y = _phi
-    _Z = np.ones(len(_theta))*0.5
-
-    
     global time_mesh
     time_mesh = time_mesh + time.time() - st
     global first_time
@@ -242,7 +233,7 @@ def do_iteration(rate=1e-4,pcol="black"):
         triangles = np.array([list(triangle) for triangle in myMesh.triangles])
         ax.tripcolor(X,Y,triangles=triangles, facecolors=np.zeros(num_triangle), edgecolors='k', cmap='Blues')
         first_time = False
-    ax.scatter(_X, _Y, color=pcol, s=2)
+    # ax.scatter(_X, _Y, color=pcol, s=2)
 
 do_iteration(pcol="green", rate=1e-3)
 
