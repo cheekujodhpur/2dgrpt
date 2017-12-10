@@ -209,7 +209,11 @@ class Mesh:
 
         self.overlay_mesh = overlay_mesh
 
-
+    def draw(self, ax):
+        X = np.array([vertex[0] for vertex in self.vertices])
+        Y = np.array([vertex[1] for vertex in self.vertices])
+        triangles = np.array([list(triangle) for triangle in self.triangles])
+        ax.tripcolor(X,Y,triangles=triangles, facecolors=np.zeros(len(self.triangles)), edgecolors='k', cmap='Blues')
 
 # myMesh = Mesh([(0,0),(0,1),(1,0),(1,1)], (0,0))
 # myMesh.submesh(5)
