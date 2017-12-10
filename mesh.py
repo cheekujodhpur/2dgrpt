@@ -18,12 +18,17 @@ class Mesh:
     metric = None
     neighbours = {}
     overlay_mesh = {}
+    corners = []
+    origin = ()
 
     def __init__(self,corners,origin):
         """
         Needs:
         corners : list of four 2-tuples which describe the corners of the mesh
         """
+
+        self.corners = corners
+        self.origin = origin
 
         # NOTE: assumes a 2-tuple
         center = tuple(map(lambda x:float(x)/len(corners),reduce(lambda x,y:(x[0]+y[0],x[1]+y[1]),corners)))
