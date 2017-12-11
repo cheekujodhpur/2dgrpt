@@ -20,6 +20,7 @@ class Mesh:
     overlay_mesh = {}
     corners = []
     origin = ()
+    edge_data = {}
 
     def __init__(self,corners,origin):
         """

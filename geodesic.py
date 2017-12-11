@@ -67,6 +67,130 @@ def throw_geodesic_integrating(mesh, dt=0.01):
 
     return np.array(result)
 
+
+def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
+
+    _lx = sorted(mesh.corners, key=lambda x:x[0])[0][0]
+    _rx = sorted(mesh.corners, key=lambda x:x[0])[-1][0]
+    _ly = sorted(mesh.corners, key=lambda x:x[1])[0][1]
+    _ry = sorted(mesh.corners, key=lambda x:x[1])[-1][1]
+
+    # Geodesic integrator
+    g_int = ode(f, jac).set_integrator("dopri5")
+    y0 = np.array([startpoint[0], startpoint[1], direction[0], direction[1]])
+    g_int.set_initial_value(y0,0)
+
+    result = []
+    while g_int.successful() and (_lx < g_int.y[0] < _rx) and (_ly < g_int.y[1] < _ry):
+        xx = find_closest_edge(mesh.overlay_mesh, g_int.y[:2], mesh.vertices)
+        if xx[0]!=-1: #something is found
+            new_dir = g_int.y[2:]
+            new_dir = new_dir / np.linalg.norm(new_dir)
+            if tuple(sorted(xx[0])) in mesh.edge_data:
+                old_dir = mesh.edge_data[tuple(sorted(xx[0]))][1]
+                mesh.edge_data[tuple(sorted(xx[0]))][0] = new_dir-old_dir
+                mesh.edge_data[tuple(sorted(xx[0]))][1] = new_dir
+            else:
+                mesh.edge_data[tuple(sorted(xx[0]))] = [0, new_dir]
+
+        result.append(g_int.integrate(g_int.t+dt))
+
+    result = np.array(result)
+    ax.plot(result[:,0], result[:,1], color="black", linewidth=1)
+    print mesh.edge_data
+    return result[-1, :2], result[-1, 2:]
+
+
+def throw_geodesic_discrete(mesh, ax):
+    num_triangle = len(mesh.triangles)
+    t_id = int(np.random.random()*num_triangle) #triangle_id
+    this_triangle = mesh.triangles[t_id]
+
+    # Start point randomly chosen
+    startpoint = random_point(
+            mesh.vertices[this_triangle[0]],
+            mesh.vertices[this_triangle[1]],
+            mesh.vertices[this_triangle[2]]
+            )
+
+    # Choosing a random direction
+    direction = np.array((np.random.random(), np.random.random()))
+    # Renormalizing
+    direction = direction / np.linalg.norm(direction)
+
+    covdir = np.copy(direction)
+
+    _lx = sorted(mesh.corners, key=lambda x:x[0])[0][0]
+    _rx = sorted(mesh.corners, key=lambda x:x[0])[-1][0]
+    _ly = sorted(mesh.corners, key=lambda x:x[1])[0][1]
+    _ry = sorted(mesh.corners, key=lambda x:x[1])[-1][1]
+
+    while True:
+
+        # now figure out the triangle intersection
+        a = np.array(mesh.vertices[this_triangle[0]])
+        b = np.array(mesh.vertices[this_triangle[1]])
+        c = np.array(mesh.vertices[this_triangle[2]])
+        intersections = {}
+        # ab
+        t = np.cross((a-startpoint), (b-a))/np.cross(direction, (b-a))
+        s = np.cross((a-startpoint), direction)/np.cross(direction, (b-a))
+        intersections['ab'] = (t,s)
+        # bc
+        t = np.cross((b-startpoint), (c-b))/np.cross(direction, (c-b))
+        s = np.cross((b-startpoint), direction)/np.cross(direction, (c-b))
+        intersections['bc'] = (t,s)
+        # ca
+        t = np.cross((c-startpoint), (a-c))/np.cross(direction, (a-c))
+        s = np.cross((c-startpoint), direction)/np.cross(direction, (a-c))
+        intersections['ca'] = (t,s)
+
+        segment = filter(lambda x:intersections[x][1] <= 1 and intersections[x][1] >=0, intersections.keys())
+        segment = max(segment, key=lambda x: intersections[x][0])
+
+        local_edge = (0,0)
+        if segment == 'ab':
+            local_edge = (this_triangle[0], this_triangle[1])
+        elif segment == 'bc':
+            local_edge = (this_triangle[1], this_triangle[2])
+        elif segment == 'ca':
+            local_edge = (this_triangle[2], this_triangle[0])
+
+        # use sorted tuple for uniqueness
+        if tuple(sorted(local_edge)) not in mesh.edge_data:
+            return throw_geodesic_mark(mesh, startpoint, direction, ax)
+
+        point_of_intersection = startpoint + intersections[segment][0]*direction
+        ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
+                    ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
+
+        pos = point_of_intersection
+        #TODO: Maybe parameterize this 1e-4
+        t_id = filter(lambda x:check_for_incidence(mesh.vertices, mesh.triangles[x], point_of_intersection, 1e-4),
+                mesh.neighbours[t_id])
+
+        if len(t_id)==1:
+            t_id = t_id[0]
+        elif len(t_id)>1:
+            print "Error. Too many neighbours"
+            t_id = sorted(t_id, key=lambda x:return_incidence(mesh.vertices, mesh.triangles[x], point_of_intersection))[0]
+            # break
+        else:
+            break
+
+        startpoint = point_of_intersection
+        this_triangle = mesh.triangles[t_id]
+        # covdir[0] = covdir[0] + rate * 0.5 * covdir[1] * covdir[1]/(startpoint[0]*startpoint[0])
+        covdir[0] = covdir[0] + 0.5 * covdir[1] * covdir[1]/(startpoint[0]*startpoint[0])
+        covdir = covdir / np.linalg.norm(covdir)
+
+        direction[0] = covdir[0]
+        direction[1] = covdir[1]/startpoint[0]
+        direction = direction / np.linalg.norm(direction)
+
+    return point_of_intersection, direction
+
+
 # num_triangle = len(myMesh.triangles)
 # 
 # # find start point in a random triangle
@@ -276,8 +400,6 @@ def throw_geodesic_integrating(mesh, dt=0.01):
 # 
 # do_iteration(pcol="green", rate=1e-3)
 
-res = throw_geodesic_integrating(myMesh)
-
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_xlabel("x")
@@ -288,9 +410,15 @@ ax.set_xlim([_lx, _rx])
 _ly = sorted(myMesh.corners, key=lambda x:x[1])[0][1]
 _ry = sorted(myMesh.corners, key=lambda x:x[1])[-1][1]
 ax.set_ylim([_ly, _ry])
-ax.plot(res[:,0], res[:,1], color="black", linewidth=1)
 
+# res = throw_geodesic_integrating(myMesh)
+# ax.plot(res[:,0], res[:,1], color="black", linewidth=1)
+
+# Plot the mesh
 myMesh.draw(ax)
+
+# Discrete geodesic
+throw_geodesic_discrete(myMesh, ax)
 
 plt.show()
 
