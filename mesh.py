@@ -1,3 +1,4 @@
+from collections import defaultdict
 import math
 import numpy as np
 import os
@@ -30,6 +31,7 @@ class Mesh:
 
         self.corners = corners
         self.origin = origin
+        self.edge_data = defaultdict(list)
 
         # NOTE: assumes a 2-tuple
         center = tuple(map(lambda x:float(x)/len(corners),reduce(lambda x,y:(x[0]+y[0],x[1]+y[1]),corners)))

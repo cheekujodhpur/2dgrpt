@@ -81,23 +81,43 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
     g_int.set_initial_value(y0,0)
 
     result = []
+
+    xx = find_closest_edge(mesh.overlay_mesh, g_int.y[:2], mesh.vertices)
+    old_edge = xx[0]
+    if old_edge!=-1:
+        editable = xx[0]
+    else:
+        editable = -1
+
+    editing = False
+
     while g_int.successful() and (_lx < g_int.y[0] < _rx) and (_ly < g_int.y[1] < _ry):
         xx = find_closest_edge(mesh.overlay_mesh, g_int.y[:2], mesh.vertices)
         if xx[0]!=-1: #something is found
             new_dir = g_int.y[2:]
             new_dir = new_dir / np.linalg.norm(new_dir)
-            if tuple(sorted(xx[0])) in mesh.edge_data:
-                old_dir = mesh.edge_data[tuple(sorted(xx[0]))][1]
-                mesh.edge_data[tuple(sorted(xx[0]))][0] = new_dir-old_dir
-                mesh.edge_data[tuple(sorted(xx[0]))][1] = new_dir
-            else:
-                mesh.edge_data[tuple(sorted(xx[0]))] = [0, new_dir]
+            if editable!=tuple(sorted(xx[0])) and len(mesh.edge_data[tuple(sorted(xx[0]))])<2:
+                mesh.edge_data[tuple(sorted(xx[0]))].append([0, new_dir])
+            
+            if editing:
+                old_dir = mesh.edge_data[tuple(sorted(xx[0]))][-1][1]
+                mesh.edge_data[tuple(sorted(xx[0]))][-1][0] = new_dir-old_dir
+
+            old_edge = tuple(sorted(xx[0]))
+            editable = tuple(sorted(xx[0]))
+            editing = True
+
+        # xx[0] is -1
+        else:
+            editing = False
+            old_edge = -1
+
 
         result.append(g_int.integrate(g_int.t+dt))
 
     result = np.array(result)
     ax.plot(result[:,0], result[:,1], color="black", linewidth=1)
-    print mesh.edge_data
+    # print mesh.edge_data
     return result[-1, :2], result[-1, 2:]
 
 
@@ -157,7 +177,7 @@ def throw_geodesic_discrete(mesh, ax):
             local_edge = (this_triangle[2], this_triangle[0])
 
         # use sorted tuple for uniqueness
-        if tuple(sorted(local_edge)) not in mesh.edge_data:
+        if len(mesh.edge_data[tuple(sorted(local_edge))])<2:
             return throw_geodesic_mark(mesh, startpoint, direction, ax)
 
         point_of_intersection = startpoint + intersections[segment][0]*direction
