@@ -80,7 +80,7 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
     y0 = np.array([startpoint[0], startpoint[1], direction[0], direction[1]])
     g_int.set_initial_value(y0,0)
 
-    result = []
+    # result = []
 
     xx = find_closest_edge(mesh.overlay_mesh, g_int.y[:2], mesh.vertices)
     old_edge = xx[0]
@@ -100,8 +100,11 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
                 mesh.edge_data[tuple(sorted(xx[0]))].append([0, new_dir])
             
             if editing:
-                old_dir = mesh.edge_data[tuple(sorted(xx[0]))][-1][1]
-                mesh.edge_data[tuple(sorted(xx[0]))][-1][0] = new_dir-old_dir
+                try:
+                    old_dir = mesh.edge_data[tuple(sorted(xx[0]))][-1][1]
+                    mesh.edge_data[tuple(sorted(xx[0]))][-1][0] = new_dir-old_dir
+                except:
+                    print "Tried to enter into an empty block"
 
             old_edge = tuple(sorted(xx[0]))
             editable = tuple(sorted(xx[0]))
@@ -113,12 +116,34 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
             old_edge = -1
 
 
-        result.append(g_int.integrate(g_int.t+dt))
+        # result.append(g_int.integrate(g_int.t+dt))
+        g_int.integrate(g_int.t+dt)
 
-    result = np.array(result)
-    ax.plot(result[:,0], result[:,1], color="black", linewidth=1)
+    # result = np.array(result)
+    # ax.plot(result[:,0], result[:,1], color="black", linewidth=1)
     # print mesh.edge_data
-    return result[-1, :2], result[-1, 2:]
+    # Give up on plotting for speed
+    # return result[-1, :2], result[-1, 2:]
+
+
+def throw_geodesic_for_edge_collection(mesh, ax):
+    num_triangle = len(mesh.triangles)
+    t_id = int(np.random.random()*num_triangle) #triangle_id
+    this_triangle = mesh.triangles[t_id]
+
+    # Start point randomly chosen
+    startpoint = random_point(
+            mesh.vertices[this_triangle[0]],
+            mesh.vertices[this_triangle[1]],
+            mesh.vertices[this_triangle[2]]
+            )
+
+    # Choosing a random direction
+    direction = np.array((np.random.random(), np.random.random()))
+    # Renormalizing
+    direction = direction / np.linalg.norm(direction)
+
+    throw_geodesic_mark(mesh, startpoint, direction, ax)
 
 
 def throw_geodesic_discrete(mesh, ax):
@@ -438,7 +463,30 @@ ax.set_ylim([_ly, _ry])
 myMesh.draw(ax)
 
 # Discrete geodesic
-throw_geodesic_discrete(myMesh, ax)
+N = 1000
+for i in range(N):
+    if not i%10:
+        print i, "out of", N, "..."
+    throw_geodesic_for_edge_collection(myMesh, ax)
+
+# Drawing the edge data
+def draw_edge_data(myMesh):
+    for edge in myMesh.edge_data.keys():
+        for el in myMesh.edge_data[edge]:
+            left = myMesh.vertices[edge[0]]
+            right = myMesh.vertices[edge[1]]
+            x = (left[0]+right[0])/2.
+            y = (left[1]+right[1])/2.
+            try:
+                ax.add_line(Line2D([x,x+0.01*el[1][0]] \
+                            ,[y, y+0.01*el[1][1]],color="green", lw=1))
+
+                ax.add_line(Line2D([x+0.01*el[1][0],x+2*0.01*el[1][0]+0.01*el[0][0]] \
+                            ,[y+0.01*el[1][1],y+2*0.01*el[1][1]+0.01*el[0][1]],color="blue", lw=1))
+
+            except:
+                print "Error attempting to plot empty edge data"
+            # print entry
 
 plt.show()
 
