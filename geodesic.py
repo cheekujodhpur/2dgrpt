@@ -170,6 +170,8 @@ def throw_geodesic_discrete(mesh, ax):
     _ly = sorted(mesh.corners, key=lambda x:x[1])[0][1]
     _ry = sorted(mesh.corners, key=lambda x:x[1])[-1][1]
 
+    count_checker = 0
+
     while True:
 
         # now figure out the triangle intersection
@@ -190,8 +192,13 @@ def throw_geodesic_discrete(mesh, ax):
         s = np.cross((c-startpoint), direction)/np.cross(direction, (a-c))
         intersections['ca'] = (t,s)
 
+        # segment = filter(lambda x:intersections[x][1] <= 1 and intersections[x][1] >=0 and np.abs(intersections[x][0])>=1e-10, intersections.keys())
         segment = filter(lambda x:intersections[x][1] <= 1 and intersections[x][1] >=0, intersections.keys())
-        segment = max(segment, key=lambda x: intersections[x][0])
+        try:
+            segment = max(segment, key=lambda x: intersections[x][0])
+        except:
+            print "Segment empty", intersections
+            break
 
         local_edge = (0,0)
         if segment == 'ab':
@@ -203,9 +210,25 @@ def throw_geodesic_discrete(mesh, ax):
 
         # use sorted tuple for uniqueness
         if len(mesh.edge_data[tuple(sorted(local_edge))])<2:
-            return throw_geodesic_mark(mesh, startpoint, direction, ax)
+            # covdir[0] = covdir[0] + 0.5 * covdir[1] * covdir[1]/(startpoint[0]*startpoint[0])
+            # covdir = covdir / np.linalg.norm(covdir)
 
-        point_of_intersection = startpoint + intersections[segment][0]*direction
+            # ndir = np.array([0,0])
+            # ndir[0] = covdir[0]
+            # ndir[1] = covdir[1]/startpoint[0]
+            # print "covar", ndir
+            ndir = direction + np.array([0.5 * direction[1] * direction[1]/(startpoint[0]*startpoint[0]), 0])
+            # ndir = np.copy(direction)
+
+        else:
+            # Lagrange interpolation
+            entry = mesh.edge_data[tuple(sorted(local_edge))]
+            m = (entry[1][0]-entry[0][0])/(entry[1][1]-entry[0][1])
+            b = entry[0][0] - m*entry[0][1]
+            ndir = direction + m*direction + b
+            # print "using data", ndir
+
+        point_of_intersection = startpoint + intersections[segment][0]*direction*(1+1e-5)
         ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
                     ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
 
@@ -221,17 +244,31 @@ def throw_geodesic_discrete(mesh, ax):
             t_id = sorted(t_id, key=lambda x:return_incidence(mesh.vertices, mesh.triangles[x], point_of_intersection))[0]
             # break
         else:
+            print "Good Boy Exit"
             break
+
+        # print startpoint, direction, intersections
 
         startpoint = point_of_intersection
         this_triangle = mesh.triangles[t_id]
         # covdir[0] = covdir[0] + rate * 0.5 * covdir[1] * covdir[1]/(startpoint[0]*startpoint[0])
-        covdir[0] = covdir[0] + 0.5 * covdir[1] * covdir[1]/(startpoint[0]*startpoint[0])
-        covdir = covdir / np.linalg.norm(covdir)
+        #covdir[0] = covdir[0] + 0.5 * covdir[1] * covdir[1]/(startpoint[0]*startpoint[0])
+        #covdir = covdir / np.linalg.norm(covdir)
 
-        direction[0] = covdir[0]
-        direction[1] = covdir[1]/startpoint[0]
+        #direction[0] = covdir[0]
+        #direction[1] = covdir[1]/startpoint[0]
+
+        # To maintain order in the universe
+        # covdir[0] = ndir[0]
+        # covdir[1] = ndir[1]*startpoint[0]
+
+        direction = np.copy(ndir)
         direction = direction / np.linalg.norm(direction)
+
+        count_checker = count_checker + 1
+        if count_checker>=500:
+            print "Exit as loop exceeded threshold..."
+            break
 
     return point_of_intersection, direction
 
@@ -254,9 +291,10 @@ ax.set_ylim([_ly, _ry])
 myMesh.draw(ax)
 
 # Discrete geodesic
-N = 1000
+N = 5000
+print "Collecting mesh data now..."
 for i in range(N):
-    if not i%10:
+    if not i%100:
         print i, "out of", N, "..."
     throw_geodesic_for_edge_collection(myMesh, ax)
 
@@ -278,6 +316,13 @@ def draw_edge_data(myMesh):
             except:
                 print "Error attempting to plot empty edge data"
             # print entry
+
+print "firing goedesics"
+N1 = 10
+for i in range(N1):
+    if not i%1:
+        print i, "out of", N, "..."
+    throw_geodesic_discrete(myMesh, ax)
 
 plt.show()
 
