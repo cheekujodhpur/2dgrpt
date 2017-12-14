@@ -96,8 +96,8 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
         if xx[0]!=-1: #something is found
             new_dir = g_int.y[2:]
             new_dir = new_dir / np.linalg.norm(new_dir)
-            if editable!=tuple(sorted(xx[0])) and len(mesh.edge_data[tuple(sorted(xx[0]))])<2:
-                mesh.edge_data[tuple(sorted(xx[0]))].append([0, new_dir])
+            if editable!=tuple(sorted(xx[0])) and len(mesh.edge_data[tuple(sorted(xx[0]))])<3:
+                mesh.edge_data[tuple(sorted(xx[0]))].append([np.array([0,0]), new_dir])
             
             if editing:
                 try:
@@ -170,6 +170,18 @@ def throw_geodesic_discrete(mesh, ax):
     _ly = sorted(mesh.corners, key=lambda x:x[1])[0][1]
     _ry = sorted(mesh.corners, key=lambda x:x[1])[-1][1]
 
+    # Geodesic integrator
+    g_int = ode(f, jac).set_integrator("dopri5")
+    y0 = np.array([startpoint[0], startpoint[1], direction[0], direction[1]])
+    g_int.set_initial_value(y0,0)
+
+    result = []
+    while g_int.successful() and (_lx < g_int.y[0] < _rx) and (_ly < g_int.y[1] < _ry):
+        result.append(g_int.integrate(g_int.t+0.01))
+
+    result = np.array(result)
+    ax.plot(result[:,0], result[:,1], color="black", linewidth=1)
+
     count_checker = 0
 
     while True:
@@ -209,23 +221,69 @@ def throw_geodesic_discrete(mesh, ax):
             local_edge = (this_triangle[2], this_triangle[0])
 
         # use sorted tuple for uniqueness
-        if len(mesh.edge_data[tuple(sorted(local_edge))])<2:
-            # covdir[0] = covdir[0] + 0.5 * covdir[1] * covdir[1]/(startpoint[0]*startpoint[0])
-            # covdir = covdir / np.linalg.norm(covdir)
-
-            # ndir = np.array([0,0])
-            # ndir[0] = covdir[0]
-            # ndir[1] = covdir[1]/startpoint[0]
-            # print "covar", ndir
-            ndir = direction + np.array([0.5 * direction[1] * direction[1]/(startpoint[0]*startpoint[0]), 0])
+        if len(mesh.edge_data[tuple(sorted(local_edge))])<3:
+            cov_direction = np.array([direction[0], direction[1]*startpoint[0]])
+            ndir = cov_direction + np.array([0.5 * cov_direction[1] * cov_direction[1]/(startpoint[0]*startpoint[0]), 0])
+            ndir[1] = ndir[1]/startpoint[0]
             # ndir = np.copy(direction)
 
         else:
             # Lagrange interpolation
             entry = mesh.edge_data[tuple(sorted(local_edge))]
-            m = (entry[1][0]-entry[0][0])/(entry[1][1]-entry[0][1])
-            b = entry[0][0] - m*entry[0][1]
-            ndir = direction + m*direction + b
+            # data_matrix = np.zeros((3,3))
+
+            # data_matrix[0,0] = (1/((entry[0][1]-entry[1][1])*(entry[0][1]-entry[2][1])))[0]
+            # data_matrix[0,1] = (-1/((entry[0][1]-entry[1][1])*(entry[1][1]-entry[2][1])))[0]
+            # data_matrix[0,2] = (1/((entry[0][1]-entry[2][1])*(entry[1][1]-entry[2][1])))[0]
+
+            # data_matrix[1,0] = (-(entry[1][1]+entry[2][1])/((entry[0][1]-entry[1][1])*(entry[0][1]-entry[2][1])))[0]
+            # data_matrix[1,1] = ((entry[0][1]+entry[2][1])/((entry[0][1]-entry[1][1])*(entry[1][1]-entry[2][1])))[0]
+            # data_matrix[1,2] = ((entry[0][1]+entry[1][1])/((entry[0][1]-entry[2][1])*(entry[1][1]-entry[2][1])))[0]
+
+            # data_matrix[2,0] = ((entry[1][1]*entry[2][1])/((entry[0][1]-entry[1][1])*(entry[0][1]-entry[2][1])))[0]
+            # data_matrix[2,1] = (-(entry[0][1]*entry[2][1])/((entry[0][1]-entry[1][1])*(entry[1][1]-entry[2][1])))[0]
+            # data_matrix[2,2] = ((entry[0][1]*entry[1][1])/((entry[0][1]-entry[2][1])*(entry[1][1]-entry[2][1])))[0]
+
+            # y_matrix = np.zeros((3,1))
+            # y_matrix[0,0] = entry[0][0][0]
+            # y_matrix[1,0] = entry[1][0][0]
+            # y_matrix[2,0] = entry[2][0][0]
+
+            # x_matrix = np.zeros((1,3))
+            # x_matrix[0,0] = (direction*direction)[0]
+            # x_matrix[0,1] = direction[0]
+            # x_matrix[0,2] = 1
+
+            # ndir = np.array([0,0])
+            # ndir[0] = np.matmul(x_matrix, np.matmul(data_matrix, y_matrix))
+
+            # data_matrix[0,0] = (1/((entry[0][1]-entry[1][1])*(entry[0][1]-entry[2][1])))[1]
+            # data_matrix[0,1] = (-1/((entry[0][1]-entry[1][1])*(entry[1][1]-entry[2][1])))[1]
+            # data_matrix[0,2] = (1/((entry[0][1]-entry[2][1])*(entry[1][1]-entry[2][1])))[1]
+
+            # data_matrix[1,0] = (-(entry[1][1]+entry[2][1])/((entry[0][1]-entry[1][1])*(entry[0][1]-entry[2][1])))[1]
+            # data_matrix[1,1] = ((entry[0][1]+entry[2][1])/((entry[0][1]-entry[1][1])*(entry[1][1]-entry[2][1])))[1]
+            # data_matrix[1,2] = ((entry[0][1]+entry[1][1])/((entry[0][1]-entry[2][1])*(entry[1][1]-entry[2][1])))[1]
+
+            # data_matrix[2,0] = ((entry[1][1]*entry[2][1])/((entry[0][1]-entry[1][1])*(entry[0][1]-entry[2][1])))[1]
+            # data_matrix[2,1] = (-(entry[0][1]*entry[2][1])/((entry[0][1]-entry[1][1])*(entry[1][1]-entry[2][1])))[1]
+            # data_matrix[2,2] = ((entry[0][1]*entry[1][1])/((entry[0][1]-entry[2][1])*(entry[1][1]-entry[2][1])))[1]
+
+            # y_matrix[0,0] = entry[0][0][1]
+            # y_matrix[1,0] = entry[1][0][1]
+            # y_matrix[2,0] = entry[2][0][1]
+
+            # x_matrix[0,0] = (direction*direction)[1]
+            # x_matrix[0,1] = direction[1]
+            # x_matrix[0,2] = 1
+
+            # ndir[1] = np.matmul(x_matrix, np.matmul(data_matrix, y_matrix))
+
+            # ndir = direction + ndir
+
+            m = (entry[1][0]-entry[0][0])/(entry[1][1]*entry[1][1]-entry[0][1]*entry[0][1])
+            b = entry[0][0] - m*entry[0][1]*entry[0][1]
+            ndir = direction + m*direction*direction + b
             # print "using data", ndir
 
         point_of_intersection = startpoint + intersections[segment][0]*direction*(1+1e-5)
@@ -291,7 +349,7 @@ ax.set_ylim([_ly, _ry])
 myMesh.draw(ax)
 
 # Discrete geodesic
-N = 5000
+N = 1000
 print "Collecting mesh data now..."
 for i in range(N):
     if not i%100:
@@ -318,7 +376,7 @@ def draw_edge_data(myMesh):
             # print entry
 
 print "firing goedesics"
-N1 = 10
+N1 = 50
 for i in range(N1):
     if not i%1:
         print i, "out of", N, "..."
