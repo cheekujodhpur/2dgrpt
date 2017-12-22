@@ -2,6 +2,7 @@ from collections import defaultdict
 import math
 import numpy as np
 import os
+from helpers import bresenham_and_mesh
 
 from metric import Metric
 
@@ -186,29 +187,34 @@ class Mesh:
         # (1x1) -> 64 parts
         overlay_mesh = {}
         for tl in self.triangles:
-            x = int(self.vertices[tl[0]][0]/overlay_size)
-            y = int(self.vertices[tl[0]][1]/overlay_size) 
-            if (x,y) not in overlay_mesh:
-                overlay_mesh[(x,y)] = set([])
-            else:
-                overlay_mesh[(x,y)].add((tl[0], tl[1]))
-                overlay_mesh[(x,y)].add((tl[0], tl[2]))
+            x1 = int(self.vertices[tl[0]][0]/overlay_size)
+            y1 = int(self.vertices[tl[0]][1]/overlay_size)
 
-            x = int(self.vertices[tl[1]][0]/overlay_size)
-            y = int(self.vertices[tl[1]][1]/overlay_size) 
-            if (x,y) not in overlay_mesh:
-                overlay_mesh[(x,y)] = set([])
-            else:
-                overlay_mesh[(x,y)].add((tl[0], tl[1]))
-                overlay_mesh[(x,y)].add((tl[1], tl[2]))
+            x2 = int(self.vertices[tl[1]][0]/overlay_size)
+            y2 = int(self.vertices[tl[1]][1]/overlay_size)
 
-            x = int(self.vertices[tl[2]][0]/overlay_size)
-            y = int(self.vertices[tl[2]][1]/overlay_size) 
-            if (x,y) not in overlay_mesh:
-                overlay_mesh[(x,y)] = set([])
-            else:
-                overlay_mesh[(x,y)].add((tl[2], tl[1]))
-                overlay_mesh[(x,y)].add((tl[0], tl[2]))
+            #TODO: Maybe I am doing double sorting
+            # There is sorting later as well while geodesic
+            a,b = tuple(sorted((tl[0],tl[1])))
+            bresenham_and_mesh(overlay_mesh, x1, y1, x2, y2, a, b)
+
+            x1 = int(self.vertices[tl[2]][0]/overlay_size)
+            y1 = int(self.vertices[tl[2]][1]/overlay_size)
+
+            x2 = int(self.vertices[tl[1]][0]/overlay_size)
+            y2 = int(self.vertices[tl[1]][1]/overlay_size)
+
+            a,b = tuple(sorted((tl[2],tl[1])))
+            bresenham_and_mesh(overlay_mesh, x1, y1, x2, y2, a, b)
+
+            x1 = int(self.vertices[tl[0]][0]/overlay_size)
+            y1 = int(self.vertices[tl[0]][1]/overlay_size)
+
+            x2 = int(self.vertices[tl[2]][0]/overlay_size)
+            y2 = int(self.vertices[tl[2]][1]/overlay_size)
+
+            a,b = tuple(sorted((tl[0],tl[2])))
+            bresenham_and_mesh(overlay_mesh, x1, y1, x2, y2, a, b)
 
         self.overlay_mesh = overlay_mesh
 
