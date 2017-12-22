@@ -54,5 +54,8 @@ def find_closest_edge(ovmesh, pt, vertices):
             distance = dist
             minEdge = edge
 
-    return minEdge, distance
+    if distance<1e-2:
+        return minEdge, distance
+    else:
+        return -1, 0
         
