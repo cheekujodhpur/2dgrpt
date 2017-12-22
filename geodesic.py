@@ -32,7 +32,8 @@ def jac(t, y):
 myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
 myMesh.submesh(3)
 myMesh.write_to_poly(k=0.05)
-myMesh.refine_using_Triangle(18, 0.125)
+refined_size = 0.05
+myMesh.refine_using_Triangle(18, refined_size)
 
 def throw_geodesic_integrating(mesh, dt=0.01):
     num_triangle = len(mesh.triangles)
@@ -143,7 +144,7 @@ def throw_geodesic_for_edge_collection(mesh, ax):
     # Renormalizing
     direction = direction / np.linalg.norm(direction)
 
-    throw_geodesic_mark(mesh, startpoint, direction, ax)
+    throw_geodesic_mark(mesh, startpoint, direction, ax, dt=1e-2)
 
 
 def throw_geodesic_discrete(mesh, ax):
@@ -349,12 +350,17 @@ ax.set_ylim([_ly, _ry])
 myMesh.draw(ax)
 
 # Discrete geodesic
-N = 1000
+N = 5
 print "Collecting mesh data now..."
 for i in range(N):
     if not i%100:
         print i, "out of", N, "..."
     throw_geodesic_for_edge_collection(myMesh, ax)
+
+
+[ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
+[ax.add_line(Line2D([0,5],[i*refined_size,i*refined_size],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
+print len(myMesh.overlay_mesh), len(myMesh.vertices)
 
 # Drawing the edge data
 def draw_edge_data(myMesh):
@@ -375,12 +381,12 @@ def draw_edge_data(myMesh):
                 print "Error attempting to plot empty edge data"
             # print entry
 
-print "firing goedesics"
-N1 = 50
-for i in range(N1):
-    if not i%1:
-        print i, "out of", N, "..."
-    throw_geodesic_discrete(myMesh, ax)
+#print "firing goedesics"
+#N1 = 10
+#for i in range(N1):
+#    if not i%1:
+#        print i, "out of", N, "..."
+#    throw_geodesic_discrete(myMesh, ax)
 
 plt.show()
 
