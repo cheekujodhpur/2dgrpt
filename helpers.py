@@ -59,3 +59,38 @@ def find_closest_edge(ovmesh, pt, vertices):
     else:
         return -1, 0
         
+
+def bresenham_and_mesh(ovm, x1, y1, x2, y2, a, b):
+    """
+    ovm is the overlay mesh, a and b are vertex ids
+    xi and yi are the starting and endpoints obviously
+    """
+    deltax = x2-x1
+    deltay = y2-y1
+
+    if deltax == 0:
+        x = int(x1)
+        y = int(y1)
+        for y in range(y1, y2+1):
+            if (x,y) not in ovm:
+                ovm[(x,y)] = set([])
+            else:
+                ovm[(x,y)].add((a, b))
+
+    else:
+        deltaerr = np.abs(float(deltay)/deltax)
+        error = 0.0
+        y = int(y1)
+        for x in range(x1, x2+1):
+            if (x,y) not in ovm:
+                ovm[(x,y)] = set([])
+            else:
+                ovm[(x,y)].add((a, b))
+
+            error = error + deltaerr
+            while error>=0.5:
+                y = y + np.sign(deltay) * 1
+                error = error - 1.0
+
+
+
