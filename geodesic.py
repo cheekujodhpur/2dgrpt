@@ -127,9 +127,9 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
     # return result[-1, :2], result[-1, 2:]
 
 
-def throw_geodesic_for_edge_collection(mesh, ax):
+def throw_geodesic_for_edge_collection(mesh, ax, id_seed):
     num_triangle = len(mesh.triangles)
-    t_id = int(np.random.random()*num_triangle) #triangle_id
+    t_id = id_seed % num_triangle #triangle_id
     this_triangle = mesh.triangles[t_id]
 
     # Start point randomly chosen
@@ -358,7 +358,7 @@ print "Collecting mesh data now..."
 for i in range(N):
     if not i%10:
         print i, "out of", N, "..."
-    throw_geodesic_for_edge_collection(myMesh, ax)
+    throw_geodesic_for_edge_collection(myMesh, ax, i)
 
 
 [ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
