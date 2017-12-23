@@ -54,29 +54,32 @@ def find_closest_edge(ovmesh, pt, vertices, rs):
             distance = dist
             minEdge = edge
 
-    if distance<1e-2:
+    if distance<rs:
         return minEdge, distance
     else:
         return -1, 0
 
 
-def find_shooting_edge(ovmesh, pt, vertices, rs):
+def find_shooting_edge(ovmesh, pt, direction, vertices, rs):
     x = int(pt[0]/rs)
     y = int(pt[1]/rs) 
     if (x,y) not in ovmesh:
         return -1, 0
-    distance = 10000
+    mint = 10000
     minEdge = (0,0)
     for edge in ovmesh[(x,y)]:
         a = np.array(vertices[edge[0]])
         b = np.array(vertices[edge[1]])
-        dist = abs(np.linalg.norm(pt-a) + np.linalg.norm(pt-b) - np.linalg.norm(a-b)) 
-        if dist < distance:
-            distance = dist
+
+        t = np.cross((a-pt), (b-a))/np.cross(direction, (b-a))
+        s = np.cross((a-pt), direction)/np.cross(direction, (b-a))
+
+        if abs(t) < mint and 0 <= s <= 1:
+            mint = t
             minEdge = edge
 
-    if distance<1e-1:
-        return minEdge, distance
+    if mint<10000:
+        return minEdge, mint
     else:
         return -1, 0
 
@@ -86,6 +89,7 @@ def bresenham_and_mesh(ovm, x1, y1, x2, y2, a, b):
     ovm is the overlay mesh, a and b are vertex ids
     xi and yi are the starting and endpoints obviously
     """
+    #TODO: make it conservative
     deltax = x2-x1
     deltay = y2-y1
 

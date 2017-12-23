@@ -48,7 +48,7 @@ def throw_geodesic_integrating(mesh, dt=0.01):
             )
 
     # Choosing a random direction
-    direction = np.array((np.random.random(), np.random.random()))
+    direction = np.array((np.random.random()*2-1, np.random.random()*2-1))
     # Renormalizing
     direction = direction / np.linalg.norm(direction)
 
@@ -83,7 +83,7 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
 
     # result = []
 
-    xx = find_closest_edge(mesh.overlay_mesh, g_int.y[:2], mesh.vertices, refined_size)
+    xx = find_shooting_edge(mesh.overlay_mesh, g_int.y[:2], g_int.y[2:], mesh.vertices, refined_size)
     old_edge = xx[0]
     if old_edge!=-1:
         editable = xx[0]
@@ -93,7 +93,12 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
     editing = False
 
     while g_int.successful() and (_lx < g_int.y[0] < _rx) and (_ly < g_int.y[1] < _ry):
-        xx = find_closest_edge(mesh.overlay_mesh, g_int.y[:2], mesh.vertices, refined_size)
+        xx = find_shooting_edge(mesh.overlay_mesh, g_int.y[:2], g_int.y[2:], mesh.vertices, refined_size)
+
+        # DEBUG
+        # print xx, find_shooting_edge(mesh.overlay_mesh, g_int.y[:2], g_int.y[2:], mesh.vertices, refined_size)
+
+
         if xx[0]!=-1: #something is found
             new_dir = g_int.y[2:]
             new_dir = new_dir / np.linalg.norm(new_dir)
@@ -140,11 +145,11 @@ def throw_geodesic_for_edge_collection(mesh, ax, id_seed):
             )
 
     # Choosing a random direction
-    direction = np.array((np.random.random(), np.random.random()))
+    direction = np.array((np.random.random()*2-1, np.random.random()*2-1))
     # Renormalizing
     direction = direction / np.linalg.norm(direction)
 
-    throw_geodesic_mark(mesh, startpoint, direction, ax, dt=1e-2)
+    throw_geodesic_mark(mesh, startpoint, direction, ax, dt=1e-3)
 
 
 def throw_geodesic_discrete(mesh, ax):
@@ -160,7 +165,7 @@ def throw_geodesic_discrete(mesh, ax):
             )
 
     # Choosing a random direction
-    direction = np.array((np.random.random(), np.random.random()))
+    direction = np.array((np.random.random()*2-1, np.random.random()*2-1))
     # Renormalizing
     direction = direction / np.linalg.norm(direction)
 
@@ -361,8 +366,8 @@ for i in range(N):
     throw_geodesic_for_edge_collection(myMesh, ax, i)
 
 
-[ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
-[ax.add_line(Line2D([0,5],[i*refined_size,i*refined_size],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
+# [ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
+# [ax.add_line(Line2D([0,5],[i*refined_size,i*refined_size],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
 # print len(myMesh.overlay_mesh), len(myMesh.vertices)
 
 print len(myMesh.edge_data)
@@ -387,7 +392,7 @@ def draw_edge_data(myMesh):
             # print entry
 
 print "firing goedesics"
-N1 = 10
+N1 = 5
 for i in range(N1):
     if not i%1:
         print i, "out of", N, "..."
