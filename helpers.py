@@ -39,9 +39,30 @@ def return_incidence(vertices, triangle, point_of_intersection):
     return min(one, two, tre)
 
 
-def find_closest_edge(ovmesh, pt, vertices):
-    x = int(pt[0]/0.125)
-    y = int(pt[1]/0.125) 
+def find_closest_edge(ovmesh, pt, vertices, rs):
+    x = int(pt[0]/rs)
+    y = int(pt[1]/rs) 
+    if (x,y) not in ovmesh:
+        return -1, 0
+    distance = 10000
+    minEdge = (0,0)
+    for edge in ovmesh[(x,y)]:
+        a = np.array(vertices[edge[0]])
+        b = np.array(vertices[edge[1]])
+        dist = abs(np.linalg.norm(pt-a) + np.linalg.norm(pt-b) - np.linalg.norm(a-b)) 
+        if dist < distance:
+            distance = dist
+            minEdge = edge
+
+    if distance<1e-2:
+        return minEdge, distance
+    else:
+        return -1, 0
+
+
+def find_shooting_edge(ovmesh, pt, vertices, rs):
+    x = int(pt[0]/rs)
+    y = int(pt[1]/rs) 
     if (x,y) not in ovmesh:
         return -1, 0
     distance = 10000
@@ -58,7 +79,7 @@ def find_closest_edge(ovmesh, pt, vertices):
         return minEdge, distance
     else:
         return -1, 0
-        
+
 
 def bresenham_and_mesh(ovm, x1, y1, x2, y2, a, b):
     """
