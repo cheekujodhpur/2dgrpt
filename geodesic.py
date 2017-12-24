@@ -227,6 +227,7 @@ def throw_geodesic_discrete(mesh, ax):
 
         # use sorted tuple for uniqueness
         if len(mesh.edge_data[tuple(sorted(local_edge))])<3:
+            print "Sad you didn't sample enough boi..."
             cov_direction = np.array([direction[0], direction[1]*startpoint[0]])
             ndir = cov_direction + np.array([0.5 * cov_direction[1] * cov_direction[1]/(startpoint[0]*startpoint[0]), 0])
             ndir[1] = ndir[1]/startpoint[0]
@@ -235,56 +236,6 @@ def throw_geodesic_discrete(mesh, ax):
         else:
             # Lagrange interpolation
             entry = mesh.edge_data[tuple(sorted(local_edge))]
-            # data_matrix = np.zeros((3,3))
-
-            # data_matrix[0,0] = (1/((entry[0][1]-entry[1][1])*(entry[0][1]-entry[2][1])))[0]
-            # data_matrix[0,1] = (-1/((entry[0][1]-entry[1][1])*(entry[1][1]-entry[2][1])))[0]
-            # data_matrix[0,2] = (1/((entry[0][1]-entry[2][1])*(entry[1][1]-entry[2][1])))[0]
-
-            # data_matrix[1,0] = (-(entry[1][1]+entry[2][1])/((entry[0][1]-entry[1][1])*(entry[0][1]-entry[2][1])))[0]
-            # data_matrix[1,1] = ((entry[0][1]+entry[2][1])/((entry[0][1]-entry[1][1])*(entry[1][1]-entry[2][1])))[0]
-            # data_matrix[1,2] = ((entry[0][1]+entry[1][1])/((entry[0][1]-entry[2][1])*(entry[1][1]-entry[2][1])))[0]
-
-            # data_matrix[2,0] = ((entry[1][1]*entry[2][1])/((entry[0][1]-entry[1][1])*(entry[0][1]-entry[2][1])))[0]
-            # data_matrix[2,1] = (-(entry[0][1]*entry[2][1])/((entry[0][1]-entry[1][1])*(entry[1][1]-entry[2][1])))[0]
-            # data_matrix[2,2] = ((entry[0][1]*entry[1][1])/((entry[0][1]-entry[2][1])*(entry[1][1]-entry[2][1])))[0]
-
-            # y_matrix = np.zeros((3,1))
-            # y_matrix[0,0] = entry[0][0][0]
-            # y_matrix[1,0] = entry[1][0][0]
-            # y_matrix[2,0] = entry[2][0][0]
-
-            # x_matrix = np.zeros((1,3))
-            # x_matrix[0,0] = (direction*direction)[0]
-            # x_matrix[0,1] = direction[0]
-            # x_matrix[0,2] = 1
-
-            # ndir = np.array([0,0])
-            # ndir[0] = np.matmul(x_matrix, np.matmul(data_matrix, y_matrix))
-
-            # data_matrix[0,0] = (1/((entry[0][1]-entry[1][1])*(entry[0][1]-entry[2][1])))[1]
-            # data_matrix[0,1] = (-1/((entry[0][1]-entry[1][1])*(entry[1][1]-entry[2][1])))[1]
-            # data_matrix[0,2] = (1/((entry[0][1]-entry[2][1])*(entry[1][1]-entry[2][1])))[1]
-
-            # data_matrix[1,0] = (-(entry[1][1]+entry[2][1])/((entry[0][1]-entry[1][1])*(entry[0][1]-entry[2][1])))[1]
-            # data_matrix[1,1] = ((entry[0][1]+entry[2][1])/((entry[0][1]-entry[1][1])*(entry[1][1]-entry[2][1])))[1]
-            # data_matrix[1,2] = ((entry[0][1]+entry[1][1])/((entry[0][1]-entry[2][1])*(entry[1][1]-entry[2][1])))[1]
-
-            # data_matrix[2,0] = ((entry[1][1]*entry[2][1])/((entry[0][1]-entry[1][1])*(entry[0][1]-entry[2][1])))[1]
-            # data_matrix[2,1] = (-(entry[0][1]*entry[2][1])/((entry[0][1]-entry[1][1])*(entry[1][1]-entry[2][1])))[1]
-            # data_matrix[2,2] = ((entry[0][1]*entry[1][1])/((entry[0][1]-entry[2][1])*(entry[1][1]-entry[2][1])))[1]
-
-            # y_matrix[0,0] = entry[0][0][1]
-            # y_matrix[1,0] = entry[1][0][1]
-            # y_matrix[2,0] = entry[2][0][1]
-
-            # x_matrix[0,0] = (direction*direction)[1]
-            # x_matrix[0,1] = direction[1]
-            # x_matrix[0,2] = 1
-
-            # ndir[1] = np.matmul(x_matrix, np.matmul(data_matrix, y_matrix))
-
-            # ndir = direction + ndir
 
             m = (entry[1][0]-entry[0][0])/(entry[1][1]*entry[1][1]-entry[0][1]*entry[0][1])
             b = entry[0][0] - m*entry[0][1]*entry[0][1]
@@ -303,27 +254,15 @@ def throw_geodesic_discrete(mesh, ax):
         if len(t_id)==1:
             t_id = t_id[0]
         elif len(t_id)>1:
-            print "Error. Too many neighbours"
+            print "Error. Too many neighbours..."
             t_id = sorted(t_id, key=lambda x:return_incidence(mesh.vertices, mesh.triangles[x], point_of_intersection))[0]
             # break
         else:
             print "Good Boy Exit"
             break
 
-        # print startpoint, direction, intersections
-
         startpoint = point_of_intersection
         this_triangle = mesh.triangles[t_id]
-        # covdir[0] = covdir[0] + rate * 0.5 * covdir[1] * covdir[1]/(startpoint[0]*startpoint[0])
-        #covdir[0] = covdir[0] + 0.5 * covdir[1] * covdir[1]/(startpoint[0]*startpoint[0])
-        #covdir = covdir / np.linalg.norm(covdir)
-
-        #direction[0] = covdir[0]
-        #direction[1] = covdir[1]/startpoint[0]
-
-        # To maintain order in the universe
-        # covdir[0] = ndir[0]
-        # covdir[1] = ndir[1]*startpoint[0]
 
         direction = np.copy(ndir)
         direction = direction / np.linalg.norm(direction)
@@ -354,17 +293,16 @@ ax.set_ylim([_ly, _ry])
 myMesh.draw(ax)
 
 # Discrete geodesic
-N = 1000
+N = 3500
 print "Collecting mesh data now..."
 for i in range(N):
-    if not i%10:
+    if not i%100:
         print i, "out of", N, "..."
     throw_geodesic_for_edge_collection(myMesh, ax, i)
 
 
 # [ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
 # [ax.add_line(Line2D([0,5],[i*refined_size,i*refined_size],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
-# print len(myMesh.overlay_mesh), len(myMesh.vertices)
 
 print len(myMesh.edge_data)
 
@@ -384,8 +322,9 @@ def draw_edge_data(myMesh):
                             ,[y+0.01*el[1][1],y+2*0.01*el[1][1]+0.01*el[0][1]],color="blue", lw=1))
 
             except:
-                print "Error attempting to plot empty edge data"
+                print "Error attempting to plot empty edge data..."
             # print entry
+
 
 print "firing goedesics"
 N1 = 5
@@ -394,8 +333,7 @@ for i in range(N1):
         print i, "out of", N, "..."
     throw_geodesic_discrete(myMesh, ax)
 
-plt.show()
+draw_edge_data(myMesh)
 
-# print "mesh size", len(myMesh.triangles)
-# print "computation save", time_mesh/float(time_ode)
+plt.show()
 
