@@ -81,7 +81,7 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
     y0 = np.array([startpoint[0], startpoint[1], direction[0], direction[1]])
     g_int.set_initial_value(y0,0)
 
-    # result = []
+    result = []
 
     xx = find_shooting_edge(mesh.overlay_mesh, g_int.y[:2], g_int.y[2:], mesh.vertices, refined_size)
     old_edge = xx[0]
@@ -92,8 +92,13 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
         xx = find_shooting_edge(mesh.overlay_mesh, g_int.y[:2], g_int.y[2:], mesh.vertices, refined_size)
 
         if xx[0]!=-1: #something is found
-            new_dir = g_int.y[2:]
-            new_dir = new_dir / np.linalg.norm(new_dir)
+            try:
+                new_dir = result[-1][:2]-result[-2][:2]
+                new_dir = new_dir / np.linalg.norm(new_dir)
+            except:
+                print "Don't have two things in result"
+                new_dir = np.array([0,0])
+
             if old_edge!=tuple(sorted(xx[0])) and len(mesh.edge_data[tuple(sorted(xx[0]))])<3:
                 mesh.edge_data[tuple(sorted(xx[0]))].append([np.array([0,0]), new_dir])
             
@@ -113,8 +118,8 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
             old_edge = -1
 
 
-        # result.append(g_int.integrate(g_int.t+dt))
-        g_int.integrate(g_int.t+dt)
+        result.append(g_int.integrate(g_int.t+dt))
+        # g_int.integrate(g_int.t+dt)
 
     # result = np.array(result)
     # ax.plot(result[:,0], result[:,1], color="black", linewidth=1)
@@ -383,7 +388,7 @@ def draw_edge_data(myMesh):
             # print entry
 
 print "firing goedesics"
-N1 = 10
+N1 = 5
 for i in range(N1):
     if not i%1:
         print i, "out of", N, "..."
