@@ -85,24 +85,16 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
 
     xx = find_shooting_edge(mesh.overlay_mesh, g_int.y[:2], g_int.y[2:], mesh.vertices, refined_size)
     old_edge = xx[0]
-    if old_edge!=-1:
-        editable = xx[0]
-    else:
-        editable = -1
 
     editing = False
 
     while g_int.successful() and (_lx < g_int.y[0] < _rx) and (_ly < g_int.y[1] < _ry):
         xx = find_shooting_edge(mesh.overlay_mesh, g_int.y[:2], g_int.y[2:], mesh.vertices, refined_size)
 
-        # DEBUG
-        # print xx, find_shooting_edge(mesh.overlay_mesh, g_int.y[:2], g_int.y[2:], mesh.vertices, refined_size)
-
-
         if xx[0]!=-1: #something is found
             new_dir = g_int.y[2:]
             new_dir = new_dir / np.linalg.norm(new_dir)
-            if editable!=tuple(sorted(xx[0])) and len(mesh.edge_data[tuple(sorted(xx[0]))])<3:
+            if old_edge!=tuple(sorted(xx[0])) and len(mesh.edge_data[tuple(sorted(xx[0]))])<3:
                 mesh.edge_data[tuple(sorted(xx[0]))].append([np.array([0,0]), new_dir])
             
             if editing:
@@ -113,7 +105,6 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
                     print "Tried to enter into an empty block"
 
             old_edge = tuple(sorted(xx[0]))
-            editable = tuple(sorted(xx[0]))
             editing = True
 
         # xx[0] is -1
@@ -392,7 +383,7 @@ def draw_edge_data(myMesh):
             # print entry
 
 print "firing goedesics"
-N1 = 5
+N1 = 10
 for i in range(N1):
     if not i%1:
         print i, "out of", N, "..."
