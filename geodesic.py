@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # this is the file where we draw geodescis
+
 from helpers import *
 from matplotlib.lines import Line2D
 from mesh import Mesh
@@ -224,17 +225,12 @@ def throw_geodesic_discrete(mesh, ax):
         elif segment == 'ca':
             local_edge = (this_triangle[2], this_triangle[0])
 
-        point_of_intersection = startpoint + intersections[segment][0]*direction*(1+1e-5)
-
         # use sorted tuple for uniqueness
         if len(mesh.edge_data[tuple(sorted(local_edge))])<3:
             print "Sad you didn't sample enough boi..."
             cov_direction = np.array([direction[0], direction[1]*startpoint[0]])
             ndir = cov_direction + np.array([0.5 * cov_direction[1] * cov_direction[1]/(startpoint[0]*startpoint[0]), 0])
             ndir[1] = ndir[1]/startpoint[0]
-            ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
-                        ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
-            # TODO: check if this running ensures current triangle is well known
             # ndir = np.copy(direction)
 
         else:
@@ -244,10 +240,11 @@ def throw_geodesic_discrete(mesh, ax):
             m = (entry[1][0]-entry[0][0])/(entry[1][1]*entry[1][1]-entry[0][1]*entry[0][1])
             b = entry[0][0] - m*entry[0][1]*entry[0][1]
             ndir = direction + m*direction*direction + b
-            ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
-                        ,[startpoint[1], point_of_intersection[1]],color="green", lw=1))
             # print "using data", ndir
 
+        point_of_intersection = startpoint + intersections[segment][0]*direction*(1+1e-5)
+        ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
+                    ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
 
         pos = point_of_intersection
         #TODO: Maybe parameterize this 1e-4
