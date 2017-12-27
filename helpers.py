@@ -118,4 +118,5 @@ def bresenham_and_mesh(ovm, x1, y1, x2, y2, a, b):
                 error = error - 1.0
 
 
-
+def anglemod(ang):
+    return (np.pi+ang)%np.pi
