@@ -234,7 +234,6 @@ def throw_geodesic_discrete(mesh, ax):
             ndir[1] = ndir[1]/startpoint[0]
             ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
                         ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
-            # TODO: check if this running ensures current triangle is well known
             # ndir = np.copy(direction)
 
         else:
@@ -296,7 +295,7 @@ ax.set_ylim([_ly, _ry])
 myMesh.draw(ax)
 
 # Discrete geodesic
-N = 3500
+N = 300
 print "Collecting mesh data now..."
 for i in range(N):
     if not i%100:
@@ -304,10 +303,10 @@ for i in range(N):
     throw_geodesic_for_edge_collection(myMesh, ax, i)
 
 
+
+myMesh.churn_edge_data()
 # [ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
 # [ax.add_line(Line2D([0,5],[i*refined_size,i*refined_size],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
-
-print len(myMesh.edge_data)
 
 # Drawing the edge data
 def draw_edge_data(myMesh):

@@ -3,6 +3,7 @@ import math
 import numpy as np
 import os
 from helpers import bresenham_and_mesh
+from helpers import anglemod
 
 from metric import Metric
 
@@ -217,6 +218,22 @@ class Mesh:
             bresenham_and_mesh(overlay_mesh, x1, y1, x2, y2, a, b)
 
         self.overlay_mesh = overlay_mesh
+
+    def churn_edge_data(self):
+        print len(self.edge_data), "edges available..."
+        print "Begin churning..."
+
+        #TODO: Convert all samples to angle data
+        for edge in self.edge_data:
+            all_samples = self.edge_data[edge]
+            for sample in all_samples:
+                edge_angle = anglemod(np.arctan2(self.vertices[edge[0]][1]-self.vertices[edge[1]][1],\
+                        self.vertices[edge[0]][0]-self.vertices[edge[1]][0]) + np.pi/2.)
+                input_angle = anglemod(edge_angle-np.arctan2(sample[1][1], sample[1][0]))
+                output_angle = anglemod(edge_angle-np.arctan2(sample[0][1] + sample[1][1], sample[1][0] + sample[0][0]))
+                print edge_angle, input_angle, output_angle
+
+        print "End churning..."
 
     def draw(self, ax):
         X = np.array([vertex[0] for vertex in self.vertices])
