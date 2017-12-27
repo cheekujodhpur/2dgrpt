@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-NOS_EDGE = 10 #number of samples on each edge
-
 # Functions for integration
 def f(t, y):
     dy_0 = y[2]
@@ -28,13 +26,6 @@ def jac(t, y):
     r3 = np.array([-y[3]*y[3]/(y[0]**3), 0, 0, y[3]/(y[0]**2)])
     r4 = np.array([0,0,0,0])
     return np.array([r1,r2,r3,r4])
-
-
-myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
-myMesh.submesh(3)
-myMesh.write_to_poly(k=0.05)
-refined_size = 0.05
-myMesh.refine_using_Triangle(18, refined_size)
 
 def throw_geodesic_integrating(mesh, dt=0.01):
     num_triangle = len(mesh.triangles)
@@ -295,6 +286,8 @@ def throw_geodesic_discrete(mesh, ax):
 
     return point_of_intersection, direction
 
+import pickle
+myMesh = pickle.load(open("mesh.pkl","rb"))
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
@@ -307,23 +300,12 @@ _ly = sorted(myMesh.corners, key=lambda x:x[1])[0][1]
 _ry = sorted(myMesh.corners, key=lambda x:x[1])[-1][1]
 ax.set_ylim([_ly, _ry])
 
-# res = throw_geodesic_integrating(myMesh)
-# ax.plot(res[:,0], res[:,1], color="black", linewidth=1)
-
-# Plot the mesh
 myMesh.draw(ax)
+print "firing goedesics"
+N1 = 1
+for i in range(N1):
+    throw_geodesic_discrete(myMesh, ax)
 
-# Discrete geodesic
-N = 5000
-print "Collecting mesh data now..."
-for i in range(N):
-    throw_geodesic_for_edge_collection(myMesh, ax, i)
-
-
-
-myMesh.churn_edge_data()
-# [ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
-# [ax.add_line(Line2D([0,5],[i*refined_size,i*refined_size],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
 
 # Drawing the edge data
 def draw_edge_data(myMesh):
@@ -343,16 +325,6 @@ def draw_edge_data(myMesh):
             except:
                 print "Error attempting to plot empty edge data..."
             # print entry
-
-
-import pickle
-pickle.dump(myMesh, open("mesh.pkl", "wb"))
-# print "firing goedesics"
-# N1 = 5
-# for i in range(N1):
-#     if not i%1:
-#         print i, "out of", N, "..."
-#     throw_geodesic_discrete(myMesh, ax)
 
 draw_edge_data(myMesh)
 # print myMesh.edge_slope_data
