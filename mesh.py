@@ -24,6 +24,7 @@ class Mesh:
     corners = []
     origin = ()
     edge_data = {}
+    edge_slope_data = {}
 
     def __init__(self,corners,origin):
         """
@@ -34,6 +35,7 @@ class Mesh:
         self.corners = corners
         self.origin = origin
         self.edge_data = defaultdict(list)
+        self.edge_slope_data = defaultdict(list)
 
         # NOTE: assumes a 2-tuple
         center = tuple(map(lambda x:float(x)/len(corners),reduce(lambda x,y:(x[0]+y[0],x[1]+y[1]),corners)))
@@ -223,15 +225,29 @@ class Mesh:
         print len(self.edge_data), "edges available..."
         print "Begin churning..."
 
-        #TODO: Convert all samples to angle data
         for edge in self.edge_data:
             all_samples = self.edge_data[edge]
+            anglesamples = []
             for sample in all_samples:
-                edge_angle = anglemod(np.arctan2(self.vertices[edge[0]][1]-self.vertices[edge[1]][1],\
-                        self.vertices[edge[0]][0]-self.vertices[edge[1]][0]) + np.pi/2.)
-                input_angle = anglemod(edge_angle-np.arctan2(sample[1][1], sample[1][0]))
-                output_angle = anglemod(edge_angle-np.arctan2(sample[0][1] + sample[1][1], sample[1][0] + sample[0][0]))
-                print edge_angle, input_angle, output_angle
+                input_angle = anglemod(np.arctan2(sample[1][1], sample[1][0]))
+                output_angle = anglemod(np.arctan2(sample[0][1] + sample[1][1], sample[1][0] + sample[0][0]))
+                anglesamples.append((input_angle, output_angle))
+                # print input_angle, output_angle
+
+            anglesamples = sorted(anglesamples, key=lambda x:x[0])
+            slopesamples = []
+            N = len(anglesamples)
+            for i in range(N-1):
+                m = (anglesamples[i+1][1]-anglesamples[i][1])/(anglesamples[i+1][0]-anglesamples[i][0])
+                b = anglesamples[i][1] - m*anglesamples[i][0]
+                # already sorted by input_angle
+                slopesamples.append((anglesamples[i+1][0], m, b))
+
+            m = (anglesamples[N-1][1]-anglesamples[0][1])/(anglesamples[N-1][0]-anglesamples[0][0])
+            b = anglesamples[0][1] - m*anglesamples[0][0]
+            slopesamples.append((anglesamples[0][0], m, b))
+
+            self.edge_slope_data[edge] = slopesamples
 
         print "End churning..."
 

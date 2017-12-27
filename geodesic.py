@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
+NOS_EDGE = 3 #number of samples on each edge
+
 # Functions for integration
 def f(t, y):
     dy_0 = y[2]
@@ -98,7 +100,7 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
                 print "Don't have two things in result"
                 new_dir = np.array([0,0])
 
-            if old_edge!=tuple(sorted(xx[0])) and len(mesh.edge_data[tuple(sorted(xx[0]))])<3:
+            if old_edge!=tuple(sorted(xx[0])) and len(mesh.edge_data[tuple(sorted(xx[0]))])<NOS_EDGE:
                 mesh.edge_data[tuple(sorted(xx[0]))].append([np.array([0,0]), new_dir])
             
             if editing:
@@ -227,7 +229,7 @@ def throw_geodesic_discrete(mesh, ax):
         point_of_intersection = startpoint + intersections[segment][0]*direction*(1+1e-5)
 
         # use sorted tuple for uniqueness
-        if len(mesh.edge_data[tuple(sorted(local_edge))])<3:
+        if len(mesh.edge_data[tuple(sorted(local_edge))])<2:
             print "Sad you didn't sample enough boi..."
             cov_direction = np.array([direction[0], direction[1]*startpoint[0]])
             ndir = cov_direction + np.array([0.5 * cov_direction[1] * cov_direction[1]/(startpoint[0]*startpoint[0]), 0])
@@ -238,11 +240,28 @@ def throw_geodesic_discrete(mesh, ax):
 
         else:
             # Lagrange interpolation
-            entry = mesh.edge_data[tuple(sorted(local_edge))]
+            entry = mesh.edge_slope_data[tuple(sorted(local_edge))]
+            _n = len(entry)
 
-            m = (entry[1][0]-entry[0][0])/(entry[1][1]*entry[1][1]-entry[0][1]*entry[0][1])
-            b = entry[0][0] - m*entry[0][1]*entry[0][1]
-            ndir = direction + m*direction*direction + b
+            in_ang = anglemod(np.arctan2(direction[1], direction[0]))
+            ndir = []
+            if entry[-1][0] <= in_ang < entry[0][0]:
+                n_ang = anglemod(entry[0][1]*in_ang + entry[0][2])
+                ndir = np.array([np.cos(n_ang), np.sin(n_ang)])
+            else:
+                for i in range(1, _n-1):
+                    if in_ang < entry[i][0]:
+                        n_ang = anglemod(entry[i][1]*in_ang + entry[i][2])
+                        ndir = np.array([np.cos(n_ang), np.sin(n_ang)])
+                        break
+            if len(ndir)==0:
+                n_ang = anglemod(entry[_n-1][1]*in_ang + entry[_n-1][2])
+                ndir = np.array([np.cos(n_ang), np.sin(n_ang)])
+
+            # m = (entry[1][0]-entry[0][0])/(entry[1][1]*entry[1][1]-entry[0][1]*entry[0][1])
+            # b = entry[0][0] - m*entry[0][1]*entry[0][1]
+            # ndir = direction + m*direction*direction + b
+
             ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
                         ,[startpoint[1], point_of_intersection[1]],color="green", lw=1))
             # print "using data", ndir
@@ -336,6 +355,7 @@ for i in range(N1):
     throw_geodesic_discrete(myMesh, ax)
 
 draw_edge_data(myMesh)
+print myMesh.edge_slope_data
 
 plt.show()
 
