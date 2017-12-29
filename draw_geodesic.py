@@ -14,17 +14,17 @@ import os
 # Functions for integration
 def f(t, y):
     dy_0 = y[2]
-    dy_1 = y[3]/y[0]
+    dy_1 = y[3]
     # dy_2 = -0.5*y[0]*(y[3]**2)
-    dy_2 = 0.5*(y[3]**2)/(y[0]**2)
+    dy_2 = 0
     dy_3 = 0
     return np.array([dy_0, dy_1, dy_2, dy_3])
 
 def jac(t, y):
     r1 = np.array([0, 0, 1, 0])
-    r2 = np.array([-y[3]/(y[0]*y[0]), 0, 0, 1/y[0]])
-    r3 = np.array([-y[3]*y[3]/(y[0]**3), 0, 0, y[3]/(y[0]**2)])
-    r4 = np.array([0,0,0,0])
+    r2 = np.array([0, 0, 0, 1])
+    r3 = np.array([0, 0, 0, 0])
+    r4 = np.array([0, 0, 0, 0])
     return np.array([r1,r2,r3,r4])
 
 def throw_geodesic_integrating(mesh, dt=0.01):
@@ -179,6 +179,7 @@ def throw_geodesic_discrete(mesh, ax):
 
     count_checker = 0
 
+    print "marching directions..."
     while True:
 
         # now figure out the triangle intersection
@@ -221,9 +222,9 @@ def throw_geodesic_discrete(mesh, ax):
         if len(mesh.edge_data[tuple(sorted(local_edge))])<2:
             print "Sad you didn't sample enough boi..."
             # TODO: this whole section is a scam
-            cov_direction = np.array([direction[0], direction[1]*startpoint[0]])
-            ndir = cov_direction + np.array([0.5 * cov_direction[1] * cov_direction[1]/(startpoint[0]*startpoint[0]), 0])
-            ndir[1] = ndir[1]/startpoint[0]
+            cov_direction = np.array([direction[0], direction[1]])
+            ndir = cov_direction + np.array([0, 0])
+            ndir[1] = ndir[1]
             ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
                         ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
             # ndir = np.copy(direction)
@@ -286,7 +287,7 @@ def throw_geodesic_discrete(mesh, ax):
     return point_of_intersection, direction
 
 import pickle
-myMesh = pickle.load(open("mesh.pkl","rb"))
+myMesh = pickle.load(open("meshlin.pkl","rb"))
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
@@ -301,7 +302,7 @@ ax.set_ylim([_ly, _ry])
 
 myMesh.draw(ax)
 print "firing goedesics"
-N1 = 1
+N1 = 10
 for i in range(N1):
     throw_geodesic_discrete(myMesh, ax)
 
