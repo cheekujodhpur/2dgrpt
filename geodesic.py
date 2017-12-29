@@ -166,11 +166,6 @@ def throw_geodesic_discrete(mesh, ax):
     # Renormalizing
     direction = direction / np.linalg.norm(direction)
 
-    direction[1] = direction[1]/startpoint[0]
-    direction = direction / np.linalg.norm(direction)
-
-    covdir = np.copy(direction)
-
     _lx = sorted(mesh.corners, key=lambda x:x[0])[0][0]
     _rx = sorted(mesh.corners, key=lambda x:x[0])[-1][0]
     _ly = sorted(mesh.corners, key=lambda x:x[1])[0][1]
@@ -187,6 +182,9 @@ def throw_geodesic_discrete(mesh, ax):
 
     result = np.array(result)
     ax.plot(result[:,0], result[:,1], color="black", linewidth=1)
+
+    direction = result[0,:2]-startpoint
+    direction = direction / np.linalg.norm(direction)
 
     count_checker = 0
 
@@ -231,6 +229,7 @@ def throw_geodesic_discrete(mesh, ax):
         # use sorted tuple for uniqueness
         if len(mesh.edge_data[tuple(sorted(local_edge))])<2:
             print "Sad you didn't sample enough boi..."
+            # TODO: this whole section is a scam
             cov_direction = np.array([direction[0], direction[1]*startpoint[0]])
             ndir = cov_direction + np.array([0.5 * cov_direction[1] * cov_direction[1]/(startpoint[0]*startpoint[0]), 0])
             ndir[1] = ndir[1]/startpoint[0]
