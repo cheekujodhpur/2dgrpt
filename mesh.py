@@ -4,7 +4,6 @@ import numpy as np
 import os
 from helpers import bresenham_and_mesh
 from helpers import anglemod
-
 from metric import Metric
 
 # Defining the Mesh
@@ -231,6 +230,7 @@ class Mesh:
             for sample in all_samples:
                 input_angle = anglemod(np.arctan2(sample[1][1], sample[1][0]))
                 output_angle = anglemod(np.arctan2(sample[0][1] + sample[1][1], sample[1][0] + sample[0][0]))
+
                 anglesamples.append((input_angle, output_angle))
                 # print input_angle, output_angle
 
