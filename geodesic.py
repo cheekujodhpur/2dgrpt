@@ -89,6 +89,7 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
 
     editing = False
     editidx = -1
+    currxx = -1
 
     while g_int.successful() and (_lx < g_int.y[0] < _rx) and (_ly < g_int.y[1] < _ry):
         xx = find_shooting_edge(mesh.overlay_mesh, g_int.y[:2], g_int.y[2:], mesh.vertices, refined_size)
@@ -102,22 +103,26 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
                 new_dir = np.array([0,0])
                 editing = False
 
-            if old_edge!=tuple(sorted(xx[0])) and len(mesh.edge_data[tuple(sorted(xx[0]))])<NOS_EDGE:
-                if new_dir[0]==0 and new_dir[1]==0:
-                    editing = False
+            if old_edge!=tuple(sorted(xx[0])):
+                if len(mesh.edge_data[tuple(sorted(xx[0]))])<NOS_EDGE:
+                    if new_dir[0]==0 and new_dir[1]==0:
+                        editing = False
+                    else:
+                        mesh.edge_data[tuple(sorted(xx[0]))].append([np.array([0,0]), new_dir])
+                        editidx = len(mesh.edge_data[tuple(sorted(xx[0]))])-1
+                        currxx = tuple(sorted(xx[0]))
+                        #TODO: Somehow deal with erroneously using previous geodesics results
                 else:
-                    mesh.edge_data[tuple(sorted(xx[0]))].append([np.array([0,0]), new_dir])
-                    editidx = len(mesh.edge_data[tuple(sorted(xx[0]))])-1
-                    #TODO: Somehow deal with erroneously using previous geodesics results
-            
-            if editing:
+                    editing = False
+
+            if editing and currxx == tuple(sorted(xx[0])):
                 try:
                     if editidx!=-1:
                         old_dir = mesh.edge_data[tuple(sorted(xx[0]))][editidx][1]
                         if np.linalg.norm(new_dir-old_dir)>1e-3:
-                            print result[-3:], old_dir, new_dir, old_edge, xx
+                            print xx, currxx
                             print "-----"
-                        mesh.edge_data[tuple(sorted(xx[0]))][-1][0] = new_dir-old_dir
+                        mesh.edge_data[tuple(sorted(xx[0]))][editidx][0] = new_dir-old_dir
                 except:
                     # print "Tried to enter into an empty block"
                     dummy = 1
