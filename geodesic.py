@@ -99,7 +99,7 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
                 new_dir = result[-1][:2]-result[-2][:2]
                 new_dir = new_dir / np.linalg.norm(new_dir)
             except:
-                # print "Don't have two things in result"
+                print "Don't have two things in result"
                 new_dir = np.array([0,0])
                 editing = False
 
@@ -119,13 +119,9 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
                 try:
                     if editidx!=-1:
                         old_dir = mesh.edge_data[tuple(sorted(xx[0]))][editidx][1]
-                        if np.linalg.norm(new_dir-old_dir)>1e-3:
-                            print xx, currxx
-                            print "-----"
                         mesh.edge_data[tuple(sorted(xx[0]))][editidx][0] = new_dir-old_dir
                 except:
-                    # print "Tried to enter into an empty block"
-                    dummy = 1
+                    print "Tried to enter into an empty block"
 
             old_edge = tuple(sorted(xx[0]))
             editing = True
