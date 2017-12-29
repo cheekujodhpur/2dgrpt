@@ -119,5 +119,5 @@ def bresenham_and_mesh(ovm, x1, y1, x2, y2, a, b):
 
 
 def anglemod(ang):
-    modded = (np.pi+ang)%np.pi
+    modded = (2*np.pi+ang)%(2*np.pi)
     return modded

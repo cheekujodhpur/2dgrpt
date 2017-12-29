@@ -12,20 +12,36 @@ import numpy as np
 import os
 
 # Functions for integration
+# def f(t, y):
+#     dy_0 = y[2]
+#     dy_1 = y[3]
+#     # dy_2 = -0.5*y[0]*(y[3]**2)
+#     dy_2 = 0
+#     dy_3 = 0
+#     return np.array([dy_0, dy_1, dy_2, dy_3])
+
+# def jac(t, y):
+#     r1 = np.array([0, 0, 1, 0])
+#     r2 = np.array([0, 0, 0, 1])
+#     r3 = np.array([0, 0, 0, 0])
+#     r4 = np.array([0, 0, 0, 0])
+#     return np.array([r1,r2,r3,r4])
+
 def f(t, y):
     dy_0 = y[2]
-    dy_1 = y[3]
+    dy_1 = y[3]/y[0]
     # dy_2 = -0.5*y[0]*(y[3]**2)
-    dy_2 = 0
+    dy_2 = 0.5*(y[3]**2)/(y[0]**2)
     dy_3 = 0
     return np.array([dy_0, dy_1, dy_2, dy_3])
 
 def jac(t, y):
     r1 = np.array([0, 0, 1, 0])
-    r2 = np.array([0, 0, 0, 1])
-    r3 = np.array([0, 0, 0, 0])
-    r4 = np.array([0, 0, 0, 0])
+    r2 = np.array([-y[3]/(y[0]*y[0]), 0, 0, 1/y[0]])
+    r3 = np.array([-y[3]*y[3]/(y[0]**3), 0, 0, y[3]/(y[0]**2)])
+    r4 = np.array([0,0,0,0])
     return np.array([r1,r2,r3,r4])
+
 
 def throw_geodesic_integrating(mesh, dt=0.01):
     num_triangle = len(mesh.triangles)
@@ -179,7 +195,6 @@ def throw_geodesic_discrete(mesh, ax):
 
     count_checker = 0
 
-    print "marching directions..."
     while True:
 
         # now figure out the triangle intersection
@@ -326,7 +341,7 @@ def draw_edge_data(myMesh):
                 print "Error attempting to plot empty edge data..."
             # print entry
 
-draw_edge_data(myMesh)
+# draw_edge_data(myMesh)
 # print myMesh.edge_slope_data
 
 plt.show()
