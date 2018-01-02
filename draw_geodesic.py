@@ -10,6 +10,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import time
 
 # Functions for integration
 # def f(t, y):
@@ -178,6 +179,7 @@ def throw_geodesic_discrete(mesh, ax):
     _ly = sorted(mesh.corners, key=lambda x:x[1])[0][1]
     _ry = sorted(mesh.corners, key=lambda x:x[1])[-1][1]
 
+    stime1 = time.time()
     # Geodesic integrator
     g_int = ode(f, jac).set_integrator("dopri5")
     y0 = np.array([startpoint[0], startpoint[1], direction[0], direction[1]])
@@ -187,9 +189,12 @@ def throw_geodesic_discrete(mesh, ax):
     while g_int.successful() and (_lx < g_int.y[0] < _rx) and (_ly < g_int.y[1] < _ry):
         result.append(g_int.integrate(g_int.t+0.01))
 
+    etime1 = time.time()
+
     result = np.array(result)
     ax.plot(result[:,0], result[:,1], color="black", linewidth=1)
 
+    stime2 = time.time()
     direction = result[0,:2]-startpoint
     direction = direction / np.linalg.norm(direction)
 
@@ -241,10 +246,10 @@ def throw_geodesic_discrete(mesh, ax):
             cov_direction = cov_direction / np.linalg.norm(cov_direction)
 
             g_int_ad = ode(f, jac).set_integrator("dopri5")
-            trialpt = startpoint - 0.0005*direction
+            trialpt = startpoint - 0.025*direction
             y0 = np.array([trialpt[0], trialpt[1], cov_direction[0], cov_direction[1]])
             g_int_ad.set_initial_value(y0,0)
-            new_result = g_int_ad.integrate(g_int_ad.t+0.001)
+            new_result = g_int_ad.integrate(g_int_ad.t+0.025)
 
             # ndir = cov_direction + np.array([0, 0])
             # ndir[1] = ndir[1]
@@ -308,13 +313,18 @@ def throw_geodesic_discrete(mesh, ax):
             print "Exit as loop exceeded threshold..."
             break
 
+    etime2 = time.time()
+
+    print "For integrator", etime1-stime1, "seconds..."
+    print "For marching", etime2-stime2, "seconds..."
+
     return point_of_intersection, direction
 
 import pickle
-myMesh = pickle.load(open("meshlin.pkl","rb"))
+myMesh = pickle.load(open("mesh3.pkl","rb"))
 
 print "firing goedesics"
-N1 = 1
+N1 = 5
 for i in range(N1):
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -329,6 +339,7 @@ for i in range(N1):
 
     myMesh.draw(ax)
     throw_geodesic_discrete(myMesh, ax)
+    dummy = raw_input("enter any key to continue...")
     plt.show()
 
 

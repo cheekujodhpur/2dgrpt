@@ -47,7 +47,7 @@ def jac(t, y):
 
 myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
 myMesh.submesh(3)
-myMesh.write_to_poly(k=0.01)
+myMesh.write_to_poly(k=0.05)
 refined_size = 0.05
 myMesh.refine_using_Triangle(18, refined_size)
 
@@ -174,7 +174,7 @@ def throw_geodesic_for_edge_collection(mesh, ax, id_seed):
     # Renormalizing
     direction = direction / np.linalg.norm(direction)
 
-    throw_geodesic_mark(mesh, startpoint, direction, ax, dt=1e-3)
+    throw_geodesic_mark(mesh, startpoint, direction, ax, dt=5e-3)
 
 
 def throw_geodesic_discrete(mesh, ax):
@@ -316,7 +316,7 @@ def throw_geodesic_discrete(mesh, ax):
         direction = direction / np.linalg.norm(direction)
 
         count_checker = count_checker + 1
-        if count_checker>=500:
+        if count_checker>=5000:
             print "Exit as loop exceeded threshold..."
             break
 
@@ -374,7 +374,7 @@ def draw_edge_data(myMesh):
 
 
 import pickle
-pickle.dump(myMesh, open("meshlin.pkl", "wb"))
+pickle.dump(myMesh, open("mesh3.pkl", "wb"))
 # print "firing goedesics"
 # N1 = 5
 # for i in range(N1):
