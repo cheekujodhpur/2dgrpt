@@ -85,96 +85,60 @@ def throw_geodesic_integrating(mesh, dt=0.01):
     return np.array(result)
 
 
-def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
+def throw_geodesic_mark(mesh, ax, dt=0.01):
 
     _lx = sorted(mesh.corners, key=lambda x:x[0])[0][0]
     _rx = sorted(mesh.corners, key=lambda x:x[0])[-1][0]
     _ly = sorted(mesh.corners, key=lambda x:x[1])[0][1]
     _ry = sorted(mesh.corners, key=lambda x:x[1])[-1][1]
 
-    # Geodesic integrator
     g_int = ode(f, jac).set_integrator("dopri5")
-    y0 = np.array([startpoint[0], startpoint[1], direction[0], direction[1]])
-    g_int.set_initial_value(y0,0)
 
-    result = []
+    dx = 2*dt
 
-    xx = find_shooting_edge(mesh.overlay_mesh, g_int.y[:2], g_int.y[2:], mesh.vertices, refined_size)
-    old_edge = xx[0]
+    count = 0
+    # iterate over all triangles
+    for triangle in mesh.triangles:
+        count = count + 1
+        print "Triangle no.", count, "..."
+        for xx in range(3):
+            # pick an edge and go on
+            edge = tuple(sorted([triangle[xx], triangle[(xx+1)%3]]))
+            if len(mesh.edge_data[edge])<NOS_EDGE:
+                # pick a point a bit off the edge, how do we decide how off the edge
+                edge_v = np.array(mesh.vertices[edge[1]])-np.array(mesh.vertices[edge[0]])
+                edge_mid = (np.array(mesh.vertices[edge[1]])+np.array(mesh.vertices[edge[0]]))/2.
+                perp_v = np.array([edge_v[1], -edge_v[0]])
+                perp_v = perp_v / np.linalg.norm(perp_v)
+                # assume sigma is one, that is ratio of dt to dx
 
-    editing = False
-    editidx = -1
-    currxx = -1
+                for sgnf in [1,-1]:
 
-    while g_int.successful() and (_lx < g_int.y[0] < _rx) and (_ly < g_int.y[1] < _ry):
-        xx = find_shooting_edge(mesh.overlay_mesh, g_int.y[:2], g_int.y[2:], mesh.vertices, refined_size)
+                    perp_v = sgnf*perp_v
 
-        if xx[0]!=-1: #something is found
-            try:
-                new_dir = result[-1][:2]-result[-2][:2]
-                new_dir = new_dir / np.linalg.norm(new_dir)
-            except:
-                print "Don't have two things in result"
-                new_dir = np.array([0,0])
-                editing = False
+                    startpoint = edge_mid - dx*perp_v
+                    perp_ang = anglemod(np.arctan2(perp_v[1], perp_v[0]))
+                    
+                    start_ang = perp_ang - ((NOS_EDGE-1)/float(NOS_EDGE))*np.pi
+                    end_ang = perp_ang + ((NOS_EDGE-1)/float(NOS_EDGE))*np.pi
+                    while start_ang < end_ang:
+                        direction = np.array([np.cos(start_ang), np.sin(start_ang)])
+                        y0 = np.array([startpoint[0], startpoint[1], direction[0], direction[1]])
+                        g_int.set_initial_value(y0,0)
+                        res = g_int.integrate(g_int.t+dt)
+                        old_dir = res[:2] - startpoint
+                        old_dir = old_dir / np.linalg.norm(old_dir)
 
-            if old_edge!=tuple(sorted(xx[0])):
-                if len(mesh.edge_data[tuple(sorted(xx[0]))])<NOS_EDGE:
-                    if new_dir[0]==0 and new_dir[1]==0:
-                        editing = False
-                    else:
-                        mesh.edge_data[tuple(sorted(xx[0]))].append([np.array([0,0]), new_dir])
-                        editidx = len(mesh.edge_data[tuple(sorted(xx[0]))])-1
-                        currxx = tuple(sorted(xx[0]))
-                        #TODO: Somehow deal with erroneously using previous geodesics results
-                else:
-                    editing = False
+                        oldfinpos = res
+                        finpos = np.copy(res)
+                        for dumiter in range(4):
+                            oldfinpos = np.copy(finpos)
+                            finpos = g_int.integrate(g_int.t+dt)
 
-            if editing and currxx == tuple(sorted(xx[0])):
-                try:
-                    if editidx!=-1:
-                        old_dir = mesh.edge_data[tuple(sorted(xx[0]))][editidx][1]
-                        mesh.edge_data[tuple(sorted(xx[0]))][editidx][0] = new_dir-old_dir
-                except:
-                    print "Tried to enter into an empty block"
-
-            old_edge = tuple(sorted(xx[0]))
-            editing = True
-
-        # xx[0] is -1
-        else:
-            editing = False
-            old_edge = -1
-
-
-        result.append(g_int.integrate(g_int.t+dt))
-        # g_int.integrate(g_int.t+dt)
-
-    # result = np.array(result)
-    # ax.plot(result[:,0], result[:,1], color="black", linewidth=1)
-    # print mesh.edge_data
-    # Give up on plotting for speed
-    # return result[-1, :2], result[-1, 2:]
-
-
-def throw_geodesic_for_edge_collection(mesh, ax, id_seed):
-    num_triangle = len(mesh.triangles)
-    t_id = id_seed % num_triangle #triangle_id
-    this_triangle = mesh.triangles[t_id]
-
-    # Start point randomly chosen
-    startpoint = random_point(
-            mesh.vertices[this_triangle[0]],
-            mesh.vertices[this_triangle[1]],
-            mesh.vertices[this_triangle[2]]
-            )
-
-    # Choosing a random direction
-    direction = np.array((np.random.random()*2-1, np.random.random()*2-1))
-    # Renormalizing
-    direction = direction / np.linalg.norm(direction)
-
-    throw_geodesic_mark(mesh, startpoint, direction, ax, dt=5e-3)
+                        new_dir = finpos[:2]-oldfinpos[:2]
+                        new_dir = new_dir / np.linalg.norm(new_dir)
+                        mesh.edge_data[edge].append([new_dir-old_dir, old_dir])
+                        start_ang += (1/float(NOS_EDGE))*np.pi
 
 
 def throw_geodesic_discrete(mesh, ax):
@@ -325,29 +289,23 @@ def throw_geodesic_discrete(mesh, ax):
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
-ax.set_xlabel("x")
-ax.set_ylabel("y")
-_lx = sorted(myMesh.corners, key=lambda x:x[0])[0][0]
-_rx = sorted(myMesh.corners, key=lambda x:x[0])[-1][0]
-ax.set_xlim([_lx, _rx])
-_ly = sorted(myMesh.corners, key=lambda x:x[1])[0][1]
-_ry = sorted(myMesh.corners, key=lambda x:x[1])[-1][1]
-ax.set_ylim([_ly, _ry])
+# ax.set_xlabel("x")
+# ax.set_ylabel("y")
+# _lx = sorted(myMesh.corners, key=lambda x:x[0])[0][0]
+# _rx = sorted(myMesh.corners, key=lambda x:x[0])[-1][0]
+# ax.set_xlim([_lx, _rx])
+# _ly = sorted(myMesh.corners, key=lambda x:x[1])[0][1]
+# _ry = sorted(myMesh.corners, key=lambda x:x[1])[-1][1]
+# ax.set_ylim([_ly, _ry])
 
 # res = throw_geodesic_integrating(myMesh)
 # ax.plot(res[:,0], res[:,1], color="black", linewidth=1)
 
 # Plot the mesh
-myMesh.draw(ax)
+# myMesh.draw(ax)
 
 # Discrete geodesic
-N = 10000
-print "Collecting mesh data now..."
-for i in range(N):
-    if not i%100:
-        print i, "out of", N, "..."
-    throw_geodesic_for_edge_collection(myMesh, ax, i)
-
+throw_geodesic_mark(myMesh, ax, dt=5e-3)
 
 myMesh.churn_edge_data()
 # [ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
@@ -374,7 +332,7 @@ def draw_edge_data(myMesh):
 
 
 import pickle
-pickle.dump(myMesh, open("mesh3.pkl", "wb"))
+pickle.dump(myMesh, open("mesh_ns.pkl", "wb"))
 # print "firing goedesics"
 # N1 = 5
 # for i in range(N1):
@@ -384,8 +342,8 @@ pickle.dump(myMesh, open("mesh3.pkl", "wb"))
 
 print "Done!"
 
-draw_edge_data(myMesh)
+# draw_edge_data(myMesh)
 # print myMesh.edge_slope_data
 
-plt.show()
+# plt.show()
 

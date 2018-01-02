@@ -121,3 +121,22 @@ def bresenham_and_mesh(ovm, x1, y1, x2, y2, a, b):
 def anglemod(ang):
     modded = (2*np.pi+ang)%(2*np.pi)
     return modded
+
+# Drawing the edge data
+def draw_edge_data(myMesh):
+    for edge in myMesh.edge_data.keys():
+        for el in myMesh.edge_data[edge]:
+            left = myMesh.vertices[edge[0]]
+            right = myMesh.vertices[edge[1]]
+            x = (left[0]+right[0])/2.
+            y = (left[1]+right[1])/2.
+            try:
+                ax.add_line(Line2D([x,x+0.01*el[1][0]] \
+                            ,[y, y+0.01*el[1][1]],color="green", lw=1))
+
+                ax.add_line(Line2D([x+0.01*el[1][0],x+2*0.01*el[1][0]+0.01*el[0][0]] \
+                            ,[y+0.01*el[1][1],y+2*0.01*el[1][1]+0.01*el[0][1]],color="blue", lw=1))
+
+            except:
+                print "Error attempting to plot empty edge data..."
+            # print entry

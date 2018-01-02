@@ -251,8 +251,7 @@ def throw_geodesic_discrete(mesh, ax):
             g_int_ad.set_initial_value(y0,0)
             new_result = g_int_ad.integrate(g_int_ad.t+0.025)
 
-            # ndir = cov_direction + np.array([0, 0])
-            # ndir[1] = ndir[1]
+            # ndir = cov_direction + np.array([0, 0]) # ndir[1] = ndir[1]
             ndir = new_result[:2]-y0[:2]
             ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
                         ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
@@ -321,26 +320,7 @@ def throw_geodesic_discrete(mesh, ax):
     return point_of_intersection, direction
 
 import pickle
-myMesh = pickle.load(open("mesh3.pkl","rb"))
-
-print "firing goedesics"
-N1 = 5
-for i in range(N1):
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    _lx = sorted(myMesh.corners, key=lambda x:x[0])[0][0]
-    _rx = sorted(myMesh.corners, key=lambda x:x[0])[-1][0]
-    ax.set_xlim([_lx, _rx])
-    _ly = sorted(myMesh.corners, key=lambda x:x[1])[0][1]
-    _ry = sorted(myMesh.corners, key=lambda x:x[1])[-1][1]
-    ax.set_ylim([_ly, _ry])
-
-    myMesh.draw(ax)
-    throw_geodesic_discrete(myMesh, ax)
-    dummy = raw_input("enter any key to continue...")
-    plt.show()
+myMesh = pickle.load(open("mesh_ns.pkl","rb"))
 
 
 # Drawing the edge data
@@ -362,7 +342,42 @@ def draw_edge_data(myMesh):
                 print "Error attempting to plot empty edge data..."
             # print entry
 
+
+print "firing goedesics"
+
+fig = plt.figure()
+ax = fig.add_subplot(111)
+ax.set_xlabel("x")
+ax.set_ylabel("y")
+_lx = sorted(myMesh.corners, key=lambda x:x[0])[0][0]
+_rx = sorted(myMesh.corners, key=lambda x:x[0])[-1][0]
+ax.set_xlim([_lx, _rx])
+_ly = sorted(myMesh.corners, key=lambda x:x[1])[0][1]
+_ry = sorted(myMesh.corners, key=lambda x:x[1])[-1][1]
+ax.set_ylim([_ly, _ry])
+
+
+myMesh.draw(ax)
 # draw_edge_data(myMesh)
+# dummy = raw_input("enter any key to continue...")
+
+N1 = 5
+for i in range(N1):
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    # ax.set_xlabel("x")
+    # ax.set_ylabel("y")
+    # _lx = sorted(myMesh.corners, key=lambda x:x[0])[0][0]
+    # _rx = sorted(myMesh.corners, key=lambda x:x[0])[-1][0]
+    # ax.set_xlim([_lx, _rx])
+    # _ly = sorted(myMesh.corners, key=lambda x:x[1])[0][1]
+    # _ry = sorted(myMesh.corners, key=lambda x:x[1])[-1][1]
+    # ax.set_ylim([_ly, _ry])
+
+    throw_geodesic_discrete(myMesh, ax)
+    # dummy = raw_input("enter any key to continue...")
+    # plt.show()
+
+
+plt.show()
 # print myMesh.edge_slope_data
-
-
