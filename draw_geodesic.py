@@ -237,9 +237,18 @@ def throw_geodesic_discrete(mesh, ax):
         if len(mesh.edge_data[tuple(sorted(local_edge))])<2:
             print "Sad you didn't sample enough boi..."
             # TODO: this whole section is a scam
-            cov_direction = np.array([direction[0], direction[1]])
-            ndir = cov_direction + np.array([0, 0])
-            ndir[1] = ndir[1]
+            cov_direction = np.array([direction[0], direction[1]*startpoint[0]])
+            cov_direction = cov_direction / np.linalg.norm(cov_direction)
+
+            g_int_ad = ode(f, jac).set_integrator("dopri5")
+            trialpt = startpoint - 0.0005*direction
+            y0 = np.array([trialpt[0], trialpt[1], cov_direction[0], cov_direction[1]])
+            g_int_ad.set_initial_value(y0,0)
+            new_result = g_int_ad.integrate(g_int_ad.t+0.001)
+
+            # ndir = cov_direction + np.array([0, 0])
+            # ndir[1] = ndir[1]
+            ndir = new_result[:2]-y0[:2]
             ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
                         ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
             # ndir = np.copy(direction)
@@ -317,7 +326,7 @@ ax.set_ylim([_ly, _ry])
 
 myMesh.draw(ax)
 print "firing goedesics"
-N1 = 10
+N1 = 1
 for i in range(N1):
     throw_geodesic_discrete(myMesh, ax)
 
