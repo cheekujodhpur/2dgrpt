@@ -243,9 +243,10 @@ class Mesh:
                 # already sorted by input_angle
                 slopesamples.append((anglesamples[i+1][0], m, b))
 
-            m = (anglesamples[N-1][1]-anglesamples[0][1])/(anglesamples[N-1][0]-anglesamples[0][0])
-            b = anglesamples[0][1] - m*anglesamples[0][0]
-            slopesamples.append((anglesamples[0][0], m, b))
+            if N>1:
+                m = (anglesamples[N-1][1]-anglesamples[0][1])/(anglesamples[N-1][0]-anglesamples[0][0])
+                b = anglesamples[0][1] - m*anglesamples[0][0]
+                slopesamples.append((anglesamples[0][0], m, b))
 
             self.edge_slope_data[edge] = slopesamples
 
