@@ -313,22 +313,23 @@ def throw_geodesic_discrete(mesh, ax):
 import pickle
 myMesh = pickle.load(open("meshlin.pkl","rb"))
 
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.set_xlabel("x")
-ax.set_ylabel("y")
-_lx = sorted(myMesh.corners, key=lambda x:x[0])[0][0]
-_rx = sorted(myMesh.corners, key=lambda x:x[0])[-1][0]
-ax.set_xlim([_lx, _rx])
-_ly = sorted(myMesh.corners, key=lambda x:x[1])[0][1]
-_ry = sorted(myMesh.corners, key=lambda x:x[1])[-1][1]
-ax.set_ylim([_ly, _ry])
-
-myMesh.draw(ax)
 print "firing goedesics"
 N1 = 1
 for i in range(N1):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    _lx = sorted(myMesh.corners, key=lambda x:x[0])[0][0]
+    _rx = sorted(myMesh.corners, key=lambda x:x[0])[-1][0]
+    ax.set_xlim([_lx, _rx])
+    _ly = sorted(myMesh.corners, key=lambda x:x[1])[0][1]
+    _ry = sorted(myMesh.corners, key=lambda x:x[1])[-1][1]
+    ax.set_ylim([_ly, _ry])
+
+    myMesh.draw(ax)
     throw_geodesic_discrete(myMesh, ax)
+    plt.show()
 
 
 # Drawing the edge data
@@ -353,5 +354,4 @@ def draw_edge_data(myMesh):
 # draw_edge_data(myMesh)
 # print myMesh.edge_slope_data
 
-plt.show()
 
