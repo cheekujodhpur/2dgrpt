@@ -47,7 +47,7 @@ def jac(t, y):
 
 myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
 myMesh.submesh(3)
-myMesh.write_to_poly(k=0.05)
+myMesh.write_to_poly(k=0.01)
 refined_size = 0.05
 myMesh.refine_using_Triangle(18, refined_size)
 
@@ -100,7 +100,8 @@ def throw_geodesic_mark(mesh, ax, dt=0.01):
     # iterate over all triangles
     for triangle in mesh.triangles:
         count = count + 1
-        print "Triangle no.", count, "..."
+        if count%100==0:
+            print "MSG: Triangle no.", count, "..."
         for xx in range(3):
             # pick an edge and go on
             edge = tuple(sorted([triangle[xx], triangle[(xx+1)%3]]))
@@ -205,7 +206,7 @@ def throw_geodesic_discrete(mesh, ax):
         try:
             segment = max(segment, key=lambda x: intersections[x][0])
         except:
-            print "Segment empty", intersections
+            print "WARN: Segment empty", intersections
             break
 
         local_edge = (0,0)
@@ -220,8 +221,8 @@ def throw_geodesic_discrete(mesh, ax):
 
         # use sorted tuple for uniqueness
         if len(mesh.edge_data[tuple(sorted(local_edge))])<2:
-            print "Sad you didn't sample enough boi..."
-            # TODO: this whole section is a scam
+            print "WARN: Sad you didn't sample enough boi..."
+            # This section is not needed with per edge sampling
             cov_direction = np.array([direction[0], direction[1]*startpoint[0]])
             ndir = cov_direction + np.array([0.5 * cov_direction[1] * cov_direction[1]/(startpoint[0]*startpoint[0]), 0])
             ndir[1] = ndir[1]/startpoint[0]
@@ -281,7 +282,7 @@ def throw_geodesic_discrete(mesh, ax):
 
         count_checker = count_checker + 1
         if count_checker>=5000:
-            print "Exit as loop exceeded threshold..."
+            print "WARN: Exit as loop exceeded threshold..."
             break
 
     return point_of_intersection, direction
@@ -305,7 +306,7 @@ ax = fig.add_subplot(111)
 # myMesh.draw(ax)
 
 # Discrete geodesic
-throw_geodesic_mark(myMesh, ax, dt=5e-3)
+throw_geodesic_mark(myMesh, ax, dt=1e-2)
 
 myMesh.churn_edge_data()
 # [ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]

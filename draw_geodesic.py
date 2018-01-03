@@ -105,7 +105,7 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
                 new_dir = result[-1][:2]-result[-2][:2]
                 new_dir = new_dir / np.linalg.norm(new_dir)
             except:
-                print "Don't have two things in result"
+                print "WARN: Don't have two things in result"
                 new_dir = np.array([0,0])
 
             if old_edge!=tuple(sorted(xx[0])) and len(mesh.edge_data[tuple(sorted(xx[0]))])<NOS_EDGE:
@@ -116,7 +116,7 @@ def throw_geodesic_mark(mesh, startpoint, direction, ax, dt=0.01):
                     old_dir = mesh.edge_data[tuple(sorted(xx[0]))][-1][1]
                     mesh.edge_data[tuple(sorted(xx[0]))][-1][0] = new_dir-old_dir
                 except:
-                    print "Tried to enter into an empty block"
+                    print "WARN: Tried to enter into an empty block"
 
             old_edge = tuple(sorted(xx[0]))
             editing = True
@@ -339,7 +339,7 @@ def draw_edge_data(myMesh):
                             ,[y+0.01*el[1][1],y+2*0.01*el[1][1]+0.01*el[0][1]],color="blue", lw=1))
 
             except:
-                print "Error attempting to plot empty edge data..."
+                print "WARN: Error attempting to plot empty edge data..."
             # print entry
 
 
