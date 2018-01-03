@@ -118,7 +118,7 @@ class Mesh:
             self.edges.add((striangle[1], striangle[2]))
             self.edges.add((striangle[0], striangle[2]))
             center = (np.array(self.vertices[striangle[0]]) + np.array(self.vertices[striangle[1]]) + np.array(self.vertices[striangle[2]]))/3.
-            g = m.compute_metric(center, t="a1")
+            g = m.compute_metric(center, t="a2")
             self.regions.append((center[0], center[1], np.sqrt(np.linalg.det(g))))
         self.edges = list(self.edges)
 

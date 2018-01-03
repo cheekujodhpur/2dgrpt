@@ -30,5 +30,10 @@ class Metric:
             v = p-o
             g[1,1] = v[0]
 
+        elif t=="a2":
+            g[0,0] = 1
+            v = p-o
+            g[1,1] = 1./v[0]
+
         return g
         
