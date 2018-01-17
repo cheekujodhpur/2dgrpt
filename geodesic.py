@@ -85,7 +85,7 @@ def throw_geodesic_integrating(mesh, dt=0.01):
     return np.array(result)
 
 
-def throw_geodesic_mark(mesh, ax, dt=0.01):
+def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir):
 
     _lx = sorted(mesh.corners, key=lambda x:x[0])[0][0]
     _rx = sorted(mesh.corners, key=lambda x:x[0])[-1][0]
@@ -93,20 +93,7 @@ def throw_geodesic_mark(mesh, ax, dt=0.01):
     _ry = sorted(mesh.corners, key=lambda x:x[1])[-1][1]
 
     num_triangle = len(mesh.triangles)
-    t_id = int(np.random.random()*num_triangle) #triangle_id
     this_triangle = mesh.triangles[t_id]
-
-    # Start point randomly chosen
-    startpoint = random_point(
-            mesh.vertices[this_triangle[0]],
-            mesh.vertices[this_triangle[1]],
-            mesh.vertices[this_triangle[2]]
-            )
-
-    # Choosing a random direction
-    covdir = np.array((np.random.random()*2-1, np.random.random()*2-1))
-    # Renormalizing
-    covdir = covdir / np.linalg.norm(covdir)
 
     g_int = ode(f, jac).set_integrator("dopri5")
     y0 = np.array([startpoint[0], startpoint[1], covdir[0], covdir[1]])
@@ -154,7 +141,7 @@ def throw_geodesic_mark(mesh, ax, dt=0.01):
                 ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
 
     new_dir = np.copy(direction)
-    new_dir[1] = new_dir[1] + 0.1
+    new_dir[1] = new_dir[1] + mod
     new_dir = new_dir / np.linalg.norm(new_dir)
 
     dev_g_int = ode(f, jac).set_integrator("dopri5")
@@ -180,7 +167,54 @@ def throw_geodesic_mark(mesh, ax, dt=0.01):
     dev_result = np.array(dev_result)
     ax.plot(result[:,0], result[:,1], color = "green", lw = 1)
     ax.plot(dev_result[:,0], dev_result[:,1], color = "blue", lw = 1)
-     
+
+    target = result[-1][:2]-result[0][:2]
+    target = np.arctan2(target[1], target[0])
+    calcu = dev_result[-1][:2]-dev_result[0][:2]
+    calcu = np.arctan2(calcu[1], calcu[0])
+
+    return np.abs(target-calcu)
+
+
+def throw_geodesic_mark(mesh, ax, dt=0.01):
+
+    num_triangle = len(mesh.triangles)
+    t_id = int(np.random.random()*num_triangle) #triangle_id
+    this_triangle = mesh.triangles[t_id]
+
+    # Start point randomly chosen
+    startpoint = random_point(
+            mesh.vertices[this_triangle[0]],
+            mesh.vertices[this_triangle[1]],
+            mesh.vertices[this_triangle[2]]
+            )
+
+    # Choosing a random direction
+    covdir = np.array((np.random.random()*2-1, np.random.random()*2-1))
+    # Renormalizing
+    covdir = covdir / np.linalg.norm(covdir)
+
+    base = 0.0
+    increment = 0.05
+
+    err = find_trial_error(mesh, ax, base, dt, t_id, startpoint, covdir)
+    print "Starting Error", err
+    olderr = err
+    while err > 1e-3 and increment > 1e-6:
+        err = find_trial_error(mesh, ax, base, dt, t_id, startpoint, covdir)
+        print "Current Error", err, base, increment
+        plus = find_trial_error(mesh, ax, base+increment, dt, t_id, startpoint, covdir)
+        minus = find_trial_error(mesh, ax, base-increment, dt, t_id, startpoint, covdir)
+        if plus > minus:
+            base = base - increment
+        else:
+            base = base + increment
+
+        if np.abs(olderr-err) < 1e-4:
+            increment = increment*0.5
+
+        olderr = err
+
     # dx = 2*dt
 
     # count = 0
@@ -377,14 +411,14 @@ def throw_geodesic_discrete(mesh, ax):
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
-# ax.set_xlabel("x")
-# ax.set_ylabel("y")
-# _lx = sorted(myMesh.corners, key=lambda x:x[0])[0][0]
-# _rx = sorted(myMesh.corners, key=lambda x:x[0])[-1][0]
-# ax.set_xlim([_lx, _rx])
-# _ly = sorted(myMesh.corners, key=lambda x:x[1])[0][1]
-# _ry = sorted(myMesh.corners, key=lambda x:x[1])[-1][1]
-# ax.set_ylim([_ly, _ry])
+ax.set_xlabel("x")
+ax.set_ylabel("y")
+_lx = sorted(myMesh.corners, key=lambda x:x[0])[0][0]
+_rx = sorted(myMesh.corners, key=lambda x:x[0])[-1][0]
+ax.set_xlim([_lx, _rx])
+_ly = sorted(myMesh.corners, key=lambda x:x[1])[0][1]
+_ry = sorted(myMesh.corners, key=lambda x:x[1])[-1][1]
+ax.set_ylim([_ly, _ry])
 
 # res = throw_geodesic_integrating(myMesh)
 # ax.plot(res[:,0], res[:,1], color="black", linewidth=1)
