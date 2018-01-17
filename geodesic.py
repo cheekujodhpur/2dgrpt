@@ -92,54 +92,141 @@ def throw_geodesic_mark(mesh, ax, dt=0.01):
     _ly = sorted(mesh.corners, key=lambda x:x[1])[0][1]
     _ry = sorted(mesh.corners, key=lambda x:x[1])[-1][1]
 
+    num_triangle = len(mesh.triangles)
+    t_id = int(np.random.random()*num_triangle) #triangle_id
+    this_triangle = mesh.triangles[t_id]
+
+    # Start point randomly chosen
+    startpoint = random_point(
+            mesh.vertices[this_triangle[0]],
+            mesh.vertices[this_triangle[1]],
+            mesh.vertices[this_triangle[2]]
+            )
+
+    # Choosing a random direction
+    covdir = np.array((np.random.random()*2-1, np.random.random()*2-1))
+    # Renormalizing
+    covdir = covdir / np.linalg.norm(covdir)
+
     g_int = ode(f, jac).set_integrator("dopri5")
+    y0 = np.array([startpoint[0], startpoint[1], covdir[0], covdir[1]])
+    g_int.set_initial_value(y0,0)
+    result = [y0]
+    result.append(g_int.integrate(g_int.t+dt))
+    direction = result[1][:2] - startpoint
+    direction = direction / np.linalg.norm(direction)
 
-    dx = 2*dt
+    a = np.array(mesh.vertices[this_triangle[0]])
+    b = np.array(mesh.vertices[this_triangle[1]])
+    c = np.array(mesh.vertices[this_triangle[2]])
+    intersections = {}
+    # ab
+    t = np.cross((a-startpoint), (b-a))/np.cross(direction, (b-a))
+    s = np.cross((a-startpoint), direction)/np.cross(direction, (b-a))
+    intersections['ab'] = (t,s)
+    # bc
+    t = np.cross((b-startpoint), (c-b))/np.cross(direction, (c-b))
+    s = np.cross((b-startpoint), direction)/np.cross(direction, (c-b))
+    intersections['bc'] = (t,s)
+    # ca
+    t = np.cross((c-startpoint), (a-c))/np.cross(direction, (a-c))
+    s = np.cross((c-startpoint), direction)/np.cross(direction, (a-c))
+    intersections['ca'] = (t,s)
 
-    count = 0
-    # iterate over all triangles
-    for triangle in mesh.triangles:
-        count = count + 1
-        if count%100==0:
-            print "MSG: Triangle no.", count, "..."
-        for xx in range(3):
-            # pick an edge and go on
-            edge = tuple(sorted([triangle[xx], triangle[(xx+1)%3]]))
-            if len(mesh.edge_data[edge])<NOS_EDGE:
-                # pick a point a bit off the edge, how do we decide how off the edge
-                edge_v = np.array(mesh.vertices[edge[1]])-np.array(mesh.vertices[edge[0]])
-                edge_mid = (np.array(mesh.vertices[edge[1]])+np.array(mesh.vertices[edge[0]]))/2.
-                perp_v = np.array([edge_v[1], -edge_v[0]])
-                perp_v = perp_v / np.linalg.norm(perp_v)
-                # assume sigma is one, that is ratio of dt to dx
+    # segment = filter(lambda x:intersections[x][1] <= 1 and intersections[x][1] >=0 and np.abs(intersections[x][0])>=1e-10, intersections.keys())
+    segment = filter(lambda x:intersections[x][1] <= 1 and intersections[x][1] >=0, intersections.keys())
+    try:
+        segment = max(segment, key=lambda x: intersections[x][0])
+    except:
+        print "Segment empty", intersections
 
-                for sgnf in [1,-1]:
+    local_edge = (0,0)
+    if segment == 'ab':
+        local_edge = (this_triangle[0], this_triangle[1])
+    elif segment == 'bc':
+        local_edge = (this_triangle[1], this_triangle[2])
+    elif segment == 'ca':
+        local_edge = (this_triangle[2], this_triangle[0])
 
-                    perp_v = sgnf*perp_v
+    point_of_intersection = startpoint + intersections[segment][0]*direction*(1+1e-5)
 
-                    startpoint = edge_mid - dx*perp_v
-                    perp_ang = anglemod(np.arctan2(perp_v[1], perp_v[0]))
-                    
-                    start_ang = perp_ang - ((NOS_EDGE-1)/float(NOS_EDGE))*np.pi
-                    end_ang = perp_ang + ((NOS_EDGE-1)/float(NOS_EDGE))*np.pi
-                    while start_ang < end_ang:
-                        direction = np.array([np.cos(start_ang), np.sin(start_ang)])
-                        y0 = np.array([startpoint[0], startpoint[1], direction[0], direction[1]])
-                        g_int.set_initial_value(y0,0)
-                        res = g_int.integrate(g_int.t+dt)
-                        old_dir = res[:2] - startpoint
-                        old_dir = old_dir / np.linalg.norm(old_dir)
+    ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
+                ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
 
-                        oldfinpos = res
-                        finpos = np.copy(res)
-                        for dumiter in range(4):
-                            oldfinpos = np.copy(finpos)
-                            finpos = g_int.integrate(g_int.t+dt)
+    new_dir = np.copy(direction)
+    new_dir[1] = new_dir[1] + 0.1
+    new_dir = new_dir / np.linalg.norm(new_dir)
 
-                        new_dir = finpos[:2]-oldfinpos[:2]
-                        new_dir = new_dir / np.linalg.norm(new_dir)
-                        mesh.edge_data[edge].append([new_dir-old_dir, old_dir])
-                        start_ang += (1/float(NOS_EDGE))*np.pi
+    dev_g_int = ode(f, jac).set_integrator("dopri5")
+
+    # making sure to take covariant direction here
+    dev_y0 = np.array([point_of_intersection[0], point_of_intersection[1], point_of_intersection[0]*new_dir[0], new_dir[1]])
+
+    dev_g_int.set_initial_value(dev_y0,0)
+    dev_result = [dev_y0]
+
+    N = 50
+    Ni = 0
+    while Ni < N and g_int.successful() and (_lx < g_int.y[0] < _rx) and (_ly < g_int.y[1] < _ry):
+        result.append(g_int.integrate(g_int.t+dt))
+        Ni = Ni + 1
+
+    Ni = 0
+    while Ni < N and dev_g_int.successful() and (_lx < dev_g_int.y[0] < _rx) and (_ly < dev_g_int.y[1] < _ry):
+        dev_result.append(dev_g_int.integrate(dev_g_int.t+dt))
+        Ni = Ni + 1
+
+    result = np.array(result)
+    dev_result = np.array(dev_result)
+    ax.plot(result[:,0], result[:,1], color = "green", lw = 1)
+    ax.plot(dev_result[:,0], dev_result[:,1], color = "blue", lw = 1)
+     
+    # dx = 2*dt
+
+    # count = 0
+    # # iterate over all triangles
+    # for triangle in mesh.triangles:
+    #     count = count + 1
+    #     if count%100==0:
+    #         print "MSG: Triangle no.", count, "..."
+    #     for xx in range(3):
+    #         # pick an edge and go on
+    #         edge = tuple(sorted([triangle[xx], triangle[(xx+1)%3]]))
+    #         if len(mesh.edge_data[edge])<NOS_EDGE:
+    #             # pick a point a bit off the edge, how do we decide how off the edge
+    #             edge_v = np.array(mesh.vertices[edge[1]])-np.array(mesh.vertices[edge[0]])
+    #             edge_mid = (np.array(mesh.vertices[edge[1]])+np.array(mesh.vertices[edge[0]]))/2.
+    #             perp_v = np.array([edge_v[1], -edge_v[0]])
+    #             perp_v = perp_v / np.linalg.norm(perp_v)
+    #             # assume sigma is one, that is ratio of dt to dx
+
+    #             for sgnf in [1,-1]:
+
+    #                 perp_v = sgnf*perp_v
+
+    #                 startpoint = edge_mid - dx*perp_v
+    #                 perp_ang = anglemod(np.arctan2(perp_v[1], perp_v[0]))
+    #                 
+    #                 start_ang = perp_ang - ((NOS_EDGE-1)/float(NOS_EDGE))*np.pi
+    #                 end_ang = perp_ang + ((NOS_EDGE-1)/float(NOS_EDGE))*np.pi
+    #                 while start_ang < end_ang:
+    #                     direction = np.array([np.cos(start_ang), np.sin(start_ang)])
+    #                     y0 = np.array([startpoint[0], startpoint[1], direction[0], direction[1]])
+    #                     g_int.set_initial_value(y0,0)
+    #                     res = g_int.integrate(g_int.t+dt)
+    #                     old_dir = res[:2] - startpoint
+    #                     old_dir = old_dir / np.linalg.norm(old_dir)
+
+    #                     oldfinpos = res
+    #                     finpos = np.copy(res)
+    #                     for dumiter in range(4):
+    #                         oldfinpos = np.copy(finpos)
+    #                         finpos = g_int.integrate(g_int.t+dt)
+
+    #                     new_dir = finpos[:2]-oldfinpos[:2]
+    #                     new_dir = new_dir / np.linalg.norm(new_dir)
+    #                     mesh.edge_data[edge].append([new_dir-old_dir, old_dir])
+    #                     start_ang += (1/float(NOS_EDGE))*np.pi
 
 
 def throw_geodesic_discrete(mesh, ax):
@@ -303,12 +390,12 @@ ax = fig.add_subplot(111)
 # ax.plot(res[:,0], res[:,1], color="black", linewidth=1)
 
 # Plot the mesh
-# myMesh.draw(ax)
+myMesh.draw(ax)
 
 # Discrete geodesic
 throw_geodesic_mark(myMesh, ax, dt=1e-2)
 
-myMesh.churn_edge_data()
+# myMesh.churn_edge_data()
 # [ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
 # [ax.add_line(Line2D([0,5],[i*refined_size,i*refined_size],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
 
@@ -333,7 +420,7 @@ def draw_edge_data(myMesh):
 
 
 import pickle
-pickle.dump(myMesh, open("mesh_ns.pkl", "wb"))
+pickle.dump(myMesh, open("jan17.pkl", "wb"))
 # print "firing goedesics"
 # N1 = 5
 # for i in range(N1):
@@ -346,5 +433,5 @@ print "Done!"
 # draw_edge_data(myMesh)
 # print myMesh.edge_slope_data
 
-# plt.show()
+plt.show()
 
