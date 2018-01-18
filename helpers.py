@@ -1,5 +1,8 @@
 import numpy as np
 
+phi = (1. + np.sqrt(5))/2.
+resphi = 2. - phi
+
 # Cast to ndarray, would work
 # if pi is tuple OR list
 def random_point(p1, p2, p3):
@@ -140,3 +143,28 @@ def draw_edge_data(myMesh):
             except:
                 print "Error attempting to plot empty edge data..."
             # print entry
+
+# a, b, c are three points, tau is the error margin
+def golden_section_search(a, b, c, tau, f):
+
+    if b < c:
+        x = b + resphi * (c-b)
+    else:
+        x = b - resphi * (b-a)
+
+    if np.abs(c-a) < tau * (np.abs(b)+np.abs(x)):
+        return (c+a)/2.
+
+    # assert f(x) != f(b)
+
+    if f(x) < f(b):
+        if b < c:
+            return golden_section_search(b, x, c, tau, f)
+        else:
+            return golden_section_search(a, x, b, tau, f)
+
+    else:
+        if b < c:
+            return golden_section_search(a, b, x, tau, f)
+        else:
+            return golden_section_search(x, b, c, tau, f)

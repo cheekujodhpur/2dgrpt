@@ -194,6 +194,10 @@ def throw_geodesic_mark(mesh, ax, dt=0.01):
     # Renormalizing
     covdir = covdir / np.linalg.norm(covdir)
 
+    # def f_minimizer(x):
+    #     return find_trial_error(mesh, ax, x, dt, t_id, startpoint, covdir)
+
+    # print golden_section_search(-1, 0, 1, 1e-2, f_minimizer) 
     base = 0.0
     increment = 0.05
 
