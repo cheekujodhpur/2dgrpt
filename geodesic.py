@@ -47,7 +47,7 @@ def jac(t, y):
 
 myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
 myMesh.submesh(3)
-myMesh.write_to_poly(k=0.01)
+myMesh.write_to_poly(k=0.05)
 refined_size = 0.05
 myMesh.refine_using_Triangle(18, refined_size)
 
@@ -182,7 +182,7 @@ def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir, save=False):
     return np.abs(target-calcu)
 
 
-def throw_geodesic_mark(mesh, ax, seed, dt=0.01):
+def throw_geodesic_mark(mesh, ax, seed, tau, dt=0.01):
 
     num_triangle = len(mesh.triangles)
     t_id = seed % num_triangle #triangle_id
@@ -203,75 +203,8 @@ def throw_geodesic_mark(mesh, ax, seed, dt=0.01):
     def f_minimizer(x):
         return find_trial_error(mesh, None, x, dt, t_id, startpoint, covdir)
 
-    result = nelder_mead(-1, 1, 1e-2, f_minimizer)
+    result = nelder_mead(-1, 1, tau, f_minimizer)
     find_trial_error(mesh, None, result, dt, t_id, startpoint, covdir, save=True)
-    # base = 0.0
-    # increment = 0.05
-
-    # err = find_trial_error(mesh, ax, base, dt, t_id, startpoint, covdir)
-    # print "Starting Error", err
-    # olderr = err
-    # while err > 1e-3 and increment > 1e-6:
-    #     err = find_trial_error(mesh, ax, base, dt, t_id, startpoint, covdir)
-    #     print "Current Error", err, base, increment
-    #     plus = find_trial_error(mesh, ax, base+increment, dt, t_id, startpoint, covdir)
-    #     minus = find_trial_error(mesh, ax, base-increment, dt, t_id, startpoint, covdir)
-    #     if plus > minus:
-    #         base = base - increment
-    #     else:
-    #         base = base + increment
-
-    #     if np.abs(olderr-err) < 1e-4:
-    #         increment = increment*0.5
-
-    #     olderr = err
-
-    # dx = 2*dt
-
-    # count = 0
-    # # iterate over all triangles
-    # for triangle in mesh.triangles:
-    #     count = count + 1
-    #     if count%100==0:
-    #         print "MSG: Triangle no.", count, "..."
-    #     for xx in range(3):
-    #         # pick an edge and go on
-    #         edge = tuple(sorted([triangle[xx], triangle[(xx+1)%3]]))
-    #         if len(mesh.edge_data[edge])<NOS_EDGE:
-    #             # pick a point a bit off the edge, how do we decide how off the edge
-    #             edge_v = np.array(mesh.vertices[edge[1]])-np.array(mesh.vertices[edge[0]])
-    #             edge_mid = (np.array(mesh.vertices[edge[1]])+np.array(mesh.vertices[edge[0]]))/2.
-    #             perp_v = np.array([edge_v[1], -edge_v[0]])
-    #             perp_v = perp_v / np.linalg.norm(perp_v)
-    #             # assume sigma is one, that is ratio of dt to dx
-
-    #             for sgnf in [1,-1]:
-
-    #                 perp_v = sgnf*perp_v
-
-    #                 startpoint = edge_mid - dx*perp_v
-    #                 perp_ang = anglemod(np.arctan2(perp_v[1], perp_v[0]))
-    #                 
-    #                 start_ang = perp_ang - ((NOS_EDGE-1)/float(NOS_EDGE))*np.pi
-    #                 end_ang = perp_ang + ((NOS_EDGE-1)/float(NOS_EDGE))*np.pi
-    #                 while start_ang < end_ang:
-    #                     direction = np.array([np.cos(start_ang), np.sin(start_ang)])
-    #                     y0 = np.array([startpoint[0], startpoint[1], direction[0], direction[1]])
-    #                     g_int.set_initial_value(y0,0)
-    #                     res = g_int.integrate(g_int.t+dt)
-    #                     old_dir = res[:2] - startpoint
-    #                     old_dir = old_dir / np.linalg.norm(old_dir)
-
-    #                     oldfinpos = res
-    #                     finpos = np.copy(res)
-    #                     for dumiter in range(4):
-    #                         oldfinpos = np.copy(finpos)
-    #                         finpos = g_int.integrate(g_int.t+dt)
-
-    #                     new_dir = finpos[:2]-oldfinpos[:2]
-    #                     new_dir = new_dir / np.linalg.norm(new_dir)
-    #                     mesh.edge_data[edge].append([new_dir-old_dir, old_dir])
-    #                     start_ang += (1/float(NOS_EDGE))*np.pi
 
 
 def throw_geodesic_discrete(mesh, ax):
@@ -438,11 +371,11 @@ ax.set_ylim([_ly, _ry])
 myMesh.draw(ax)
 
 # Discrete geodesic
-for i in range(5*len(myMesh.triangles)):
+for i in range(NOS_EDGE*len(myMesh.triangles)):
     print "Marking", i, "..."
-    throw_geodesic_mark(myMesh, ax, i, dt=1e-2)
+    throw_geodesic_mark(myMesh, ax, i, 1e-4, dt=1e-2)
 
-# myMesh.churn_edge_data()
+myMesh.churn_edge_data()
 # [ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
 # [ax.add_line(Line2D([0,5],[i*refined_size,i*refined_size],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
 
@@ -469,18 +402,9 @@ def draw_edge_data(myMesh):
 draw_edge_data(myMesh)
 
 import pickle
-pickle.dump(myMesh, open("jan17.pkl", "wb"))
-# print "firing goedesics"
-# N1 = 5
-# for i in range(N1):
-#     if not i%1:
-#         print i, "out of", N, "..."
-#     throw_geodesic_discrete(myMesh, ax)
+pickle.dump(myMesh, open("jan19.pkl", "wb"))
 
 print "Done!"
-
-# draw_edge_data(myMesh)
-# print myMesh.edge_slope_data
 
 plt.show()
 
