@@ -168,3 +168,43 @@ def golden_section_search(a, b, c, tau, f):
             return golden_section_search(a, b, x, tau, f)
         else:
             return golden_section_search(x, b, c, tau, f)
+
+
+def nelder_mead(x1, x2, tau, f):
+
+    alpha = 1.0
+    gamma = 2
+    rho = 0.5
+    sigma = 0.5
+
+    while True:
+        # Step 1: Order
+        if f(x1) > f(x2):
+            x1, x2 = x2, x1
+
+        # print x1, x2, f(x1), f(x2)
+
+        if np.abs(f(x2)-f(x1)) < tau:
+            return 0.5*(x1+x2)
+
+        # Step 2: Centroid
+        x0 = x1
+
+        # Step 3: Reflection
+        xr = x0 + alpha*(x0-x2)
+
+        if f(xr) < f(x1):
+            xe = x0 + gamma*(xr - x0)
+            if f(xe) < f(xr):
+                x2 = xe
+                continue
+            else:
+                x2 = xr
+                continue
+
+        xc = x0 + rho*(x2-x0)
+        if f(xc) < f(x2):
+            x2 = xc
+            continue
+
+        x2 = x1 + sigma*(x2 - x1)
