@@ -85,7 +85,7 @@ def throw_geodesic_integrating(mesh, dt=0.01):
     return np.array(result)
 
 
-def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir):
+def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir, save=False):
 
     _lx = sorted(mesh.corners, key=lambda x:x[0])[0][0]
     _rx = sorted(mesh.corners, key=lambda x:x[0])[-1][0]
@@ -137,12 +137,17 @@ def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir):
 
     point_of_intersection = startpoint + intersections[segment][0]*direction*(1+1e-5)
 
-    ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
-                ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
+    if ax is not None:
+        ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
+                    ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
 
     new_dir = np.copy(direction)
     new_dir[1] = new_dir[1] + mod
     new_dir = new_dir / np.linalg.norm(new_dir)
+
+    if save:
+        mesh.edge_data[tuple(sorted(local_edge))].append([new_dir-direction, direction])
+        return
 
     dev_g_int = ode(f, jac).set_integrator("dopri5")
 
@@ -165,8 +170,9 @@ def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir):
 
     result = np.array(result)
     dev_result = np.array(dev_result)
-    ax.plot(result[:,0], result[:,1], color = "green", lw = 1)
-    ax.plot(dev_result[:,0], dev_result[:,1], color = "blue", lw = 1)
+    if ax is not None:
+        ax.plot(result[:,0], result[:,1], color = "green", lw = 1)
+        ax.plot(dev_result[:,0], dev_result[:,1], color = "blue", lw = 1)
 
     target = result[-1][:2]-result[0][:2]
     target = np.arctan2(target[1], target[0])
@@ -176,10 +182,10 @@ def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir):
     return np.abs(target-calcu)
 
 
-def throw_geodesic_mark(mesh, ax, dt=0.01):
+def throw_geodesic_mark(mesh, ax, seed, dt=0.01):
 
     num_triangle = len(mesh.triangles)
-    t_id = int(np.random.random()*num_triangle) #triangle_id
+    t_id = seed % num_triangle #triangle_id
     this_triangle = mesh.triangles[t_id]
 
     # Start point randomly chosen
@@ -194,30 +200,31 @@ def throw_geodesic_mark(mesh, ax, dt=0.01):
     # Renormalizing
     covdir = covdir / np.linalg.norm(covdir)
 
-    # def f_minimizer(x):
-    #     return find_trial_error(mesh, ax, x, dt, t_id, startpoint, covdir)
+    def f_minimizer(x):
+        return find_trial_error(mesh, None, x, dt, t_id, startpoint, covdir)
 
-    # print golden_section_search(-1, 0, 1, 1e-2, f_minimizer) 
-    base = 0.0
-    increment = 0.05
+    result = nelder_mead(-1, 1, 1e-2, f_minimizer)
+    find_trial_error(mesh, None, result, dt, t_id, startpoint, covdir, save=True)
+    # base = 0.0
+    # increment = 0.05
 
-    err = find_trial_error(mesh, ax, base, dt, t_id, startpoint, covdir)
-    print "Starting Error", err
-    olderr = err
-    while err > 1e-3 and increment > 1e-6:
-        err = find_trial_error(mesh, ax, base, dt, t_id, startpoint, covdir)
-        print "Current Error", err, base, increment
-        plus = find_trial_error(mesh, ax, base+increment, dt, t_id, startpoint, covdir)
-        minus = find_trial_error(mesh, ax, base-increment, dt, t_id, startpoint, covdir)
-        if plus > minus:
-            base = base - increment
-        else:
-            base = base + increment
+    # err = find_trial_error(mesh, ax, base, dt, t_id, startpoint, covdir)
+    # print "Starting Error", err
+    # olderr = err
+    # while err > 1e-3 and increment > 1e-6:
+    #     err = find_trial_error(mesh, ax, base, dt, t_id, startpoint, covdir)
+    #     print "Current Error", err, base, increment
+    #     plus = find_trial_error(mesh, ax, base+increment, dt, t_id, startpoint, covdir)
+    #     minus = find_trial_error(mesh, ax, base-increment, dt, t_id, startpoint, covdir)
+    #     if plus > minus:
+    #         base = base - increment
+    #     else:
+    #         base = base + increment
 
-        if np.abs(olderr-err) < 1e-4:
-            increment = increment*0.5
+    #     if np.abs(olderr-err) < 1e-4:
+    #         increment = increment*0.5
 
-        olderr = err
+    #     olderr = err
 
     # dx = 2*dt
 
@@ -431,7 +438,9 @@ ax.set_ylim([_ly, _ry])
 myMesh.draw(ax)
 
 # Discrete geodesic
-throw_geodesic_mark(myMesh, ax, dt=1e-2)
+for i in range(5*len(myMesh.triangles)):
+    print "Marking", i, "..."
+    throw_geodesic_mark(myMesh, ax, i, dt=1e-2)
 
 # myMesh.churn_edge_data()
 # [ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
@@ -456,6 +465,8 @@ def draw_edge_data(myMesh):
                 print "Error attempting to plot empty edge data..."
             # print entry
 
+
+draw_edge_data(myMesh)
 
 import pickle
 pickle.dump(myMesh, open("jan17.pkl", "wb"))
