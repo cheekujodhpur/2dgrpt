@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
+N_checks = 15 # number of steps to error control
 NOS_EDGE = 10 #number of samples on each edge
 
 # Functions for integration
@@ -47,7 +48,7 @@ def jac(t, y):
 
 myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
 myMesh.submesh(3)
-myMesh.write_to_poly(k=0.01)
+myMesh.write_to_poly(k=0.06)
 refined_size = 0.05
 myMesh.refine_using_Triangle(18, refined_size)
 
@@ -142,22 +143,25 @@ def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir, save=False):
                     ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
 
     new_dir = np.copy(direction)
+    new_dir[0] = new_dir[0]*point_of_intersection[0]
     new_dir[1] = new_dir[1] + mod
     new_dir = new_dir / np.linalg.norm(new_dir)
 
     if save:
         mesh.edge_data[tuple(sorted(local_edge))].append([new_dir-direction, direction])
+        # print "saved", mesh.edge_data[tuple(sorted(local_edge))][-1][0]+ mesh.edge_data[tuple(sorted(local_edge))][-1][1]
         return
 
     dev_g_int = ode(f, jac).set_integrator("dopri5")
 
     # making sure to take covariant direction here
-    dev_y0 = np.array([point_of_intersection[0], point_of_intersection[1], point_of_intersection[0]*new_dir[0], new_dir[1]])
-
+    dev_y0 = np.array([point_of_intersection[0], point_of_intersection[1], new_dir[0], new_dir[1]])
+    # print "checking", dev_y0[2:], "..." 
     dev_g_int.set_initial_value(dev_y0,0)
     dev_result = [dev_y0]
 
-    N = 50
+    global N_checks
+    N = N_checks 
     Ni = 0
     while Ni < N and g_int.successful() and (_lx < g_int.y[0] < _rx) and (_ly < g_int.y[1] < _ry):
         result.append(g_int.integrate(g_int.t+dt))
@@ -201,10 +205,12 @@ def throw_geodesic_mark(mesh, ax, seed, dt=0.01):
     covdir = covdir / np.linalg.norm(covdir)
 
     def f_minimizer(x):
-        return find_trial_error(mesh, None, x, dt, t_id, startpoint, covdir)
+    #     return find_trial_error(mesh, None, x, dt, t_id, startpoint, covdir)
+        return find_trial_error(mesh, ax, x, dt, t_id, startpoint, covdir)
 
-    result = nelder_mead(-1, 1, 1e-2, f_minimizer)
-    find_trial_error(mesh, None, result, dt, t_id, startpoint, covdir, save=True)
+    result = nelder_mead(-1, 1, 1e-3, f_minimizer)
+    # find_trial_error(mesh, None, result, dt, t_id, startpoint, covdir, save=True)
+    find_trial_error(mesh, ax, result, dt, t_id, startpoint, covdir, save=True)
     # base = 0.0
     # increment = 0.05
 
@@ -440,8 +446,10 @@ myMesh.draw(ax)
 # Discrete geodesic
 for i in range(5*len(myMesh.triangles)):
     print "Marking", i, "..."
-    throw_geodesic_mark(myMesh, ax, i, dt=1e-2)
+    throw_geodesic_mark(myMesh, None, i, dt=1e-2)
 
+# for i in range(10):
+#     throw_geodesic_mark(myMesh, None, int(np.random.random()*len(myMesh.triangles)), dt=1e-2)
 # myMesh.churn_edge_data()
 # [ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
 # [ax.add_line(Line2D([0,5],[i*refined_size,i*refined_size],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
@@ -469,7 +477,7 @@ def draw_edge_data(myMesh):
 draw_edge_data(myMesh)
 
 import pickle
-pickle.dump(myMesh, open("jan17.pkl", "wb"))
+pickle.dump(myMesh, open("jan29.pkl", "wb"))
 # print "firing goedesics"
 # N1 = 5
 # for i in range(N1):
