@@ -147,10 +147,11 @@ def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir, save=False):
 
     if save:
         mesh.edge_data[tuple(sorted(local_edge))].append([new_dir-direction, direction])
-        return
 
     dev_g_int = ode(f, jac).set_integrator("dopri5")
 
+    new_dir[0] = new_dir[0]*point_of_intersection[0]
+    new_dir = new_dir / np.linalg.norm(new_dir)
     # making sure to take covariant direction here
     dev_y0 = np.array([point_of_intersection[0], point_of_intersection[1], point_of_intersection[0]*new_dir[0], new_dir[1]])
 
@@ -179,6 +180,9 @@ def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir, save=False):
     calcu = dev_result[-1][:2]-dev_result[0][:2]
     calcu = np.arctan2(calcu[1], calcu[0])
 
+    if save:
+        print "saving with an error of", np.abs(target-calcu)
+        return
     return np.abs(target-calcu)
 
 
@@ -372,8 +376,9 @@ myMesh.draw(ax)
 
 # Discrete geodesic
 for i in range(NOS_EDGE*len(myMesh.triangles)):
-    print "Marking", i, "..."
+    print "Marking", i, "...",
     throw_geodesic_mark(myMesh, ax, i, 1e-4, dt=1e-2)
+    print "done."
 
 myMesh.churn_edge_data()
 # [ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
@@ -402,7 +407,7 @@ def draw_edge_data(myMesh):
 draw_edge_data(myMesh)
 
 import pickle
-pickle.dump(myMesh, open("jan19.pkl", "wb"))
+pickle.dump(myMesh, open("feb9.pkl", "wb"))
 
 print "Done!"
 
