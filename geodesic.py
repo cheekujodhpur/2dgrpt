@@ -57,10 +57,7 @@ def throw_geodesic_integrating(mesh, dt=0.01):
     this_triangle = mesh.triangles[t_id]
 
     # Start point randomly chosen
-    startpoint = random_point(
-            mesh.vertices[this_triangle[0]],
-            mesh.vertices[this_triangle[1]],
-            mesh.vertices[this_triangle[2]]
+    startpoint = random_point( mesh.vertices[this_triangle[0]], mesh.vertices[this_triangle[1]], mesh.vertices[this_triangle[2]]
             )
 
     # Choosing a random direction
@@ -141,9 +138,7 @@ def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir, save=False):
         ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
                     ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
 
-    new_dir = np.copy(direction)
-    new_dir[1] = new_dir[1] + mod
-    new_dir = new_dir / np.linalg.norm(new_dir)
+    new_dir = np.array([np.cos(mod), np.sin(mod)])
 
     if save:
         mesh.edge_data[tuple(sorted(local_edge))].append([new_dir-direction, direction])
@@ -180,9 +175,9 @@ def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir, save=False):
     calcu = dev_result[-1][:2]-dev_result[0][:2]
     calcu = np.arctan2(calcu[1], calcu[0])
 
-    if save:
-        print "saving with an error of", np.abs(target-calcu)
-        return
+    # if save:
+    #     print "saving with an error of", np.abs(target-calcu)
+    #     return
     return np.abs(target-calcu)
 
 
@@ -207,7 +202,22 @@ def throw_geodesic_mark(mesh, ax, seed, tau, dt=0.01):
     def f_minimizer(x):
         return find_trial_error(mesh, None, x, dt, t_id, startpoint, covdir)
 
-    result = nelder_mead(-1, 1, tau, f_minimizer)
+    contradir = np.copy(covdir)
+    contradir[1] = contradir[1]*startpoint[0]
+    contradir = contradir / np.linalg.norm(contradir)
+
+    one_angle = np.arctan2(contradir[1], contradir[0])
+    result = nelder_mead(one_angle-np.pi/2., one_angle+np.pi/2, tau, f_minimizer)
+
+    if find_trial_error(mesh, None, result, dt, t_id, startpoint, covdir) > tau:
+        # print "all error details:"
+        # print "startpoint", startpoint
+        # print "direction", covdir
+        # find_trial_error(mesh, ax, result, dt, t_id, startpoint, covdir)
+        def f_minimizer_dbg(x):
+            return find_trial_error(mesh, ax, x, dt, t_id, startpoint, covdir)
+        nelder_mead(one_angle-np.pi/2., one_angle+np.pi/2, tau, f_minimizer_dbg)
+
     find_trial_error(mesh, None, result, dt, t_id, startpoint, covdir, save=True)
 
 
@@ -404,12 +414,13 @@ def draw_edge_data(myMesh):
             # print entry
 
 
-draw_edge_data(myMesh)
+# draw_edge_data(myMesh)
 
 import pickle
 pickle.dump(myMesh, open("feb9.pkl", "wb"))
 
 print "Done!"
 
-plt.show()
+# plt.show()
+plt.savefig('fig_feb9.png')
 
