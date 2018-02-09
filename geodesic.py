@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-NOS_EDGE = 10 #number of samples on each edge
+NOS_EDGE = 3 #number of samples on each edge
 
 # Functions for integration
 # def f(t, y):
@@ -153,7 +153,7 @@ def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir, save=False):
     dev_g_int.set_initial_value(dev_y0,0)
     dev_result = [dev_y0]
 
-    N = 50
+    N = 2
     Ni = 0
     while Ni < N and g_int.successful() and (_lx < g_int.y[0] < _rx) and (_ly < g_int.y[1] < _ry):
         result.append(g_int.integrate(g_int.t+dt))
@@ -421,6 +421,6 @@ pickle.dump(myMesh, open("feb9.pkl", "wb"))
 
 print "Done!"
 
-# plt.show()
-plt.savefig('fig_feb9.png')
+plt.show()
+# plt.savefig('fig_feb9.png')
 
