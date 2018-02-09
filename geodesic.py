@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-N_checks = 15 # number of steps to error control
+N_checks = 3 # number of steps to error control
 NOS_EDGE = 10 #number of samples on each edge
 
 # Functions for integration
@@ -48,7 +48,7 @@ def jac(t, y):
 
 myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
 myMesh.submesh(3)
-myMesh.write_to_poly(k=0.06)
+myMesh.write_to_poly(k=0.05)
 refined_size = 0.05
 myMesh.refine_using_Triangle(18, refined_size)
 
@@ -58,10 +58,7 @@ def throw_geodesic_integrating(mesh, dt=0.01):
     this_triangle = mesh.triangles[t_id]
 
     # Start point randomly chosen
-    startpoint = random_point(
-            mesh.vertices[this_triangle[0]],
-            mesh.vertices[this_triangle[1]],
-            mesh.vertices[this_triangle[2]]
+    startpoint = random_point( mesh.vertices[this_triangle[0]], mesh.vertices[this_triangle[1]], mesh.vertices[this_triangle[2]]
             )
 
     # Choosing a random direction
@@ -142,18 +139,15 @@ def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir, save=False):
         ax.add_line(Line2D([startpoint[0],point_of_intersection[0]] \
                     ,[startpoint[1], point_of_intersection[1]],color="red", lw=1))
 
-    new_dir = np.copy(direction)
-    new_dir[0] = new_dir[0]*point_of_intersection[0]
-    new_dir[1] = new_dir[1] + mod
-    new_dir = new_dir / np.linalg.norm(new_dir)
+    new_dir = np.array([np.cos(mod), np.sin(mod)])
 
     if save:
         mesh.edge_data[tuple(sorted(local_edge))].append([new_dir-direction, direction])
-        # print "saved", mesh.edge_data[tuple(sorted(local_edge))][-1][0]+ mesh.edge_data[tuple(sorted(local_edge))][-1][1]
-        return
 
     dev_g_int = ode(f, jac).set_integrator("dopri5")
 
+    new_dir[0] = new_dir[0]*point_of_intersection[0]
+    new_dir = new_dir / np.linalg.norm(new_dir)
     # making sure to take covariant direction here
     dev_y0 = np.array([point_of_intersection[0], point_of_intersection[1], new_dir[0], new_dir[1]])
     # print "checking", dev_y0[2:], "..." 
@@ -183,10 +177,13 @@ def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir, save=False):
     calcu = dev_result[-1][:2]-dev_result[0][:2]
     calcu = np.arctan2(calcu[1], calcu[0])
 
+    # if save:
+    #     print "saving with an error of", np.abs(target-calcu)
+    #     return
     return np.abs(target-calcu)
 
 
-def throw_geodesic_mark(mesh, ax, seed, dt=0.01):
+def throw_geodesic_mark(mesh, ax, seed, tau, dt=0.01):
 
     num_triangle = len(mesh.triangles)
     t_id = seed % num_triangle #triangle_id
@@ -208,76 +205,23 @@ def throw_geodesic_mark(mesh, ax, seed, dt=0.01):
     #     return find_trial_error(mesh, None, x, dt, t_id, startpoint, covdir)
         return find_trial_error(mesh, ax, x, dt, t_id, startpoint, covdir)
 
-    result = nelder_mead(-1, 1, 1e-3, f_minimizer)
-    # find_trial_error(mesh, None, result, dt, t_id, startpoint, covdir, save=True)
-    find_trial_error(mesh, ax, result, dt, t_id, startpoint, covdir, save=True)
-    # base = 0.0
-    # increment = 0.05
+    contradir = np.copy(covdir)
+    contradir[1] = contradir[1]*startpoint[0]
+    contradir = contradir / np.linalg.norm(contradir)
 
-    # err = find_trial_error(mesh, ax, base, dt, t_id, startpoint, covdir)
-    # print "Starting Error", err
-    # olderr = err
-    # while err > 1e-3 and increment > 1e-6:
-    #     err = find_trial_error(mesh, ax, base, dt, t_id, startpoint, covdir)
-    #     print "Current Error", err, base, increment
-    #     plus = find_trial_error(mesh, ax, base+increment, dt, t_id, startpoint, covdir)
-    #     minus = find_trial_error(mesh, ax, base-increment, dt, t_id, startpoint, covdir)
-    #     if plus > minus:
-    #         base = base - increment
-    #     else:
-    #         base = base + increment
+    one_angle = np.arctan2(contradir[1], contradir[0])
+    result = nelder_mead(one_angle-np.pi/2., one_angle+np.pi/2, tau, f_minimizer)
 
-    #     if np.abs(olderr-err) < 1e-4:
-    #         increment = increment*0.5
+    if find_trial_error(mesh, None, result, dt, t_id, startpoint, covdir) > tau:
+        # print "all error details:"
+        # print "startpoint", startpoint
+        # print "direction", covdir
+        # find_trial_error(mesh, ax, result, dt, t_id, startpoint, covdir)
+        def f_minimizer_dbg(x):
+            return find_trial_error(mesh, ax, x, dt, t_id, startpoint, covdir)
+        nelder_mead(one_angle-np.pi/2., one_angle+np.pi/2, tau, f_minimizer_dbg)
 
-    #     olderr = err
-
-    # dx = 2*dt
-
-    # count = 0
-    # # iterate over all triangles
-    # for triangle in mesh.triangles:
-    #     count = count + 1
-    #     if count%100==0:
-    #         print "MSG: Triangle no.", count, "..."
-    #     for xx in range(3):
-    #         # pick an edge and go on
-    #         edge = tuple(sorted([triangle[xx], triangle[(xx+1)%3]]))
-    #         if len(mesh.edge_data[edge])<NOS_EDGE:
-    #             # pick a point a bit off the edge, how do we decide how off the edge
-    #             edge_v = np.array(mesh.vertices[edge[1]])-np.array(mesh.vertices[edge[0]])
-    #             edge_mid = (np.array(mesh.vertices[edge[1]])+np.array(mesh.vertices[edge[0]]))/2.
-    #             perp_v = np.array([edge_v[1], -edge_v[0]])
-    #             perp_v = perp_v / np.linalg.norm(perp_v)
-    #             # assume sigma is one, that is ratio of dt to dx
-
-    #             for sgnf in [1,-1]:
-
-    #                 perp_v = sgnf*perp_v
-
-    #                 startpoint = edge_mid - dx*perp_v
-    #                 perp_ang = anglemod(np.arctan2(perp_v[1], perp_v[0]))
-    #                 
-    #                 start_ang = perp_ang - ((NOS_EDGE-1)/float(NOS_EDGE))*np.pi
-    #                 end_ang = perp_ang + ((NOS_EDGE-1)/float(NOS_EDGE))*np.pi
-    #                 while start_ang < end_ang:
-    #                     direction = np.array([np.cos(start_ang), np.sin(start_ang)])
-    #                     y0 = np.array([startpoint[0], startpoint[1], direction[0], direction[1]])
-    #                     g_int.set_initial_value(y0,0)
-    #                     res = g_int.integrate(g_int.t+dt)
-    #                     old_dir = res[:2] - startpoint
-    #                     old_dir = old_dir / np.linalg.norm(old_dir)
-
-    #                     oldfinpos = res
-    #                     finpos = np.copy(res)
-    #                     for dumiter in range(4):
-    #                         oldfinpos = np.copy(finpos)
-    #                         finpos = g_int.integrate(g_int.t+dt)
-
-    #                     new_dir = finpos[:2]-oldfinpos[:2]
-    #                     new_dir = new_dir / np.linalg.norm(new_dir)
-    #                     mesh.edge_data[edge].append([new_dir-old_dir, old_dir])
-    #                     start_ang += (1/float(NOS_EDGE))*np.pi
+    find_trial_error(mesh, None, result, dt, t_id, startpoint, covdir, save=True)
 
 
 def throw_geodesic_discrete(mesh, ax):
@@ -444,13 +388,12 @@ ax.set_ylim([_ly, _ry])
 myMesh.draw(ax)
 
 # Discrete geodesic
-for i in range(5*len(myMesh.triangles)):
-    print "Marking", i, "..."
-    throw_geodesic_mark(myMesh, None, i, dt=1e-2)
+for i in range(NOS_EDGE*len(myMesh.triangles)):
+    print "Marking", i, "...",
+    throw_geodesic_mark(myMesh, ax, i, 1e-4, dt=1e-2)
+    print "done."
 
-# for i in range(10):
-#     throw_geodesic_mark(myMesh, None, int(np.random.random()*len(myMesh.triangles)), dt=1e-2)
-# myMesh.churn_edge_data()
+myMesh.churn_edge_data()
 # [ax.add_line(Line2D([i*refined_size,i*refined_size],[0,5],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
 # [ax.add_line(Line2D([0,5],[i*refined_size,i*refined_size],color="red",lw=.2)) for i in range(1,int(5/refined_size))]
 
@@ -474,21 +417,13 @@ def draw_edge_data(myMesh):
             # print entry
 
 
-draw_edge_data(myMesh)
+# draw_edge_data(myMesh)
 
 import pickle
-pickle.dump(myMesh, open("jan29.pkl", "wb"))
-# print "firing goedesics"
-# N1 = 5
-# for i in range(N1):
-#     if not i%1:
-#         print i, "out of", N, "..."
-#     throw_geodesic_discrete(myMesh, ax)
+pickle.dump(myMesh, open("feb9.pkl", "wb"))
 
 print "Done!"
 
-# draw_edge_data(myMesh)
-# print myMesh.edge_slope_data
-
 plt.show()
+# plt.savefig('fig_feb9.png')
 

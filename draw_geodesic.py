@@ -320,8 +320,7 @@ def throw_geodesic_discrete(mesh, ax):
     return point_of_intersection, direction
 
 import pickle
-myMesh = pickle.load(open("jan29.pkl","rb"))
-
+myMesh = pickle.load(open("feb9.pkl","rb"))
 
 # Drawing the edge data
 def draw_edge_data(myMesh):
@@ -357,7 +356,6 @@ _ry = sorted(myMesh.corners, key=lambda x:x[1])[-1][1]
 ax.set_ylim([_ly, _ry])
 
 
-myMesh.churn_edge_data()
 myMesh.draw(ax)
 # draw_edge_data(myMesh)
 # dummy = raw_input("enter any key to continue...")
