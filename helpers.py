@@ -177,15 +177,17 @@ def nelder_mead(x1, x2, tau, f):
     rho = 0.5
     sigma = 0.5
 
-    while True:
+    MAX_ITER = 50
+    iter_idx = 0
+
+    while True and iter_idx < MAX_ITER:
         # Step 1: Order
         if f(x1) > f(x2):
             x1, x2 = x2, x1
 
         # print x1, x2, f(x1), f(x2)
 
-        if np.abs(f(x2)-f(x1)) < tau and np.abs(x2-x1) < 1e-1:
-            print "returning from mead", x1, x2, f(x1), f(x2)
+        if np.abs(f(x2)-f(x1)) < tau and np.abs(x2-x1) < 1:
             return 0.5*(x1+x2)
 
         # Step 2: Centroid
@@ -209,3 +211,8 @@ def nelder_mead(x1, x2, tau, f):
             continue
 
         x2 = x1 + sigma*(x2 - x1)
+
+        iter_idx = iter_idx + 1
+
+    print "[WARN]: max iter reached in nelder mead"
+    return 0.5*(x1+x2)
