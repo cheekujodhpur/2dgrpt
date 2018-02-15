@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-N_checks = 3 # number of steps to error control
-NOS_EDGE = 10 #number of samples on each edge
+N_checks = 10 # number of steps to error control
+NOS_EDGE = 1 #number of samples on each edge
 
 # Functions for integration
 # def f(t, y):
@@ -48,7 +48,7 @@ def jac(t, y):
 
 myMesh = Mesh([(0,0),(0,5),(5,0),(5,5)], (0,0))
 myMesh.submesh(3)
-myMesh.write_to_poly(k=0.05)
+myMesh.write_to_poly(k=0.5)
 refined_size = 0.05
 myMesh.refine_using_Triangle(18, refined_size)
 
@@ -83,7 +83,7 @@ def throw_geodesic_integrating(mesh, dt=0.01):
     return np.array(result)
 
 
-def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir, save=False):
+def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir, save=False, dbg=False):
 
     _lx = sorted(mesh.corners, key=lambda x:x[0])[0][0]
     _rx = sorted(mesh.corners, key=lambda x:x[0])[-1][0]
@@ -143,6 +143,9 @@ def find_trial_error(mesh, ax, mod, dt, t_id, startpoint, covdir, save=False):
 
     if save:
         mesh.edge_data[tuple(sorted(local_edge))].append([new_dir-direction, direction])
+
+    if dbg is not False:
+        print dbg, mod*180./np.pi, new_dir-direction, direction
 
     dev_g_int = ode(f, jac).set_integrator("dopri5")
 
@@ -210,16 +213,16 @@ def throw_geodesic_mark(mesh, ax, seed, tau, dt=0.01):
     contradir = contradir / np.linalg.norm(contradir)
 
     one_angle = np.arctan2(contradir[1], contradir[0])
-    result = nelder_mead(one_angle-np.pi/2., one_angle+np.pi/2, tau, f_minimizer)
+    result = nelder_mead(one_angle-0.4*np.pi, one_angle+0.4*np.pi, tau, f_minimizer)
 
-    if find_trial_error(mesh, None, result, dt, t_id, startpoint, covdir) > tau:
+    if find_trial_error(mesh, None, result, dt, t_id, startpoint, covdir, dbg="Saved..") > tau:
         # print "all error details:"
         # print "startpoint", startpoint
         # print "direction", covdir
         # find_trial_error(mesh, ax, result, dt, t_id, startpoint, covdir)
         def f_minimizer_dbg(x):
             return find_trial_error(mesh, ax, x, dt, t_id, startpoint, covdir)
-        nelder_mead(one_angle-np.pi/2., one_angle+np.pi/2, tau, f_minimizer_dbg)
+        nelder_mead(one_angle-0.4*np.pi, one_angle+0.4*np.pi, tau, f_minimizer_dbg)
 
     find_trial_error(mesh, None, result, dt, t_id, startpoint, covdir, save=True)
 
@@ -420,7 +423,7 @@ def draw_edge_data(myMesh):
 # draw_edge_data(myMesh)
 
 import pickle
-pickle.dump(myMesh, open("feb9.pkl", "wb"))
+pickle.dump(myMesh, open("feb14.pkl", "wb"))
 
 print "Done!"
 

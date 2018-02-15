@@ -184,7 +184,8 @@ def nelder_mead(x1, x2, tau, f):
 
         # print x1, x2, f(x1), f(x2)
 
-        if np.abs(f(x2)-f(x1)) < tau:
+        if np.abs(f(x2)-f(x1)) < tau and np.abs(x2-x1) < 1e-1:
+            print "returning from mead", x1, x2, f(x1), f(x2)
             return 0.5*(x1+x2)
 
         # Step 2: Centroid
