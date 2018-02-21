@@ -87,3 +87,38 @@ bool find_closest_edge(const std::unordered_map<std::vector<int>, std::vector<st
         return false;
 
 }
+
+bool find_shooting_edge(const std::unordered_map<std::vector<int>, std::vector<std::vector<int>>, vector_int_hasher> ovmesh, 
+        const Vector2d pt, const Vector2d direction, const std::vector<Vector2d> vertices, const double rs, 
+        std::vector<int> &min_edge, double &mint) {
+
+    int x = int(pt[0]/rs);
+    int y = int(pt[1]/rs);
+    std::vector<int> key = {x,y};
+    if (!ovmesh.count(key)) {
+        return false;
+    }
+
+    // TODO: Change this hard coding to either +INF or some better estimate
+    mint = 10000;
+    min_edge = std::vector<int>(0,0);
+    for(std::vector<std::vector<int>>::const_iterator it = ovmesh.at(key).begin(); it != ovmesh.at(key).end(); ++it) {
+        Vector2d a = vertices[(*it)[0]];
+        Vector2d b = vertices[(*it)[1]];
+
+        double t = cross((a-pt), (b-a))/cross(direction, (b-a));
+        double s = cross((a-pt), direction)/cross(direction, (b-a));
+
+        if (fabs(t) < mint && 0 <= s && s <= 1){
+            mint = t;
+            min_edge = *it;
+        } 
+    }
+
+    // TODO: check if this threshold should be something else
+    if (mint < 10000)
+        return true;
+    else
+        return false;
+
+}

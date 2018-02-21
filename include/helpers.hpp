@@ -32,6 +32,11 @@ namespace grpt{
             }
     };
 
+    /// Cross product of 2d vectors
+    inline double cross(const Vector2d a, const Vector2d b) {
+        return a.x()*b.y()-a.y()*b.x();
+    }
+
     /// Returns a random point inside the triangle formed by three points
     Vector2d random_point(const Vector2d p1, const Vector2d p2, const Vector2d p3);
 
@@ -48,5 +53,11 @@ namespace grpt{
     bool find_closest_edge(const std::unordered_map<std::vector<int>, std::vector<std::vector<int>>> ovmesh, 
             const Vector2d pt, const std::vector<Vector2d> vertices, const double rs, 
             std::vector<int> &min_edge, double &distance);
+
+    /// Find the edge tentatively in the direction specified, use overlay mesh (ovmesh) to use a subset of edges
+    /// rs is the refined size of the overlay mesh 
+    bool find_shooting_edge(const std::unordered_map<std::vector<int>, std::vector<std::vector<int>>, vector_int_hasher> ovmesh, 
+            const Vector2d pt, const Vector2d direction, const std::vector<Vector2d> vertices, const double rs, 
+            std::vector<int> &min_edge, double &mint);
 
 }
