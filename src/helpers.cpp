@@ -137,3 +137,52 @@ bool find_shooting_edge(const std::unordered_map<std::vector<int>,
         return false;
 
 }
+
+bool bresenham_and_mesh(std::unordered_map<std::vector<int>, 
+        std::vector<std::vector<int>>, vector_int_hasher> &ovm, 
+        const double x1, const double y1, 
+        const double x2, const double y2, 
+        const int a, const int b) {
+
+    //TODO: make it conservative
+    int deltax = x2-x1;
+    int deltay = y2-y1;
+
+    if (deltax == 0) {
+        int x = int(x1);
+        int y;
+        for(y=int(y1);y<=int(y2);++y) {
+
+
+            std::vector<int> key = {x,y};
+            if (!ovm.count(key))
+                ovm[key] = std::vector<std::vector<int>>();
+            else
+                ovm[key].push_back(std::vector<int>(a,b));
+
+        }
+    }
+
+    else {
+        double deltaerr = fabs(double(deltay)/deltax);
+        double error = 0.0;
+        int y = int(y1);
+        int x;
+        for(x=int(x1);x<=int(x2);++x) {
+            std::vector<int> key = {x,y};
+            if (!ovm.count(key))
+                ovm[key] = std::vector<std::vector<int>>();
+            else
+                ovm[key].push_back(std::vector<int>(a,b));
+
+            error = error + deltaerr;
+            while (error>=0.5){
+                y += std::copysign(1, deltay);
+                error -= 1.0;
+            }
+
+        }
+    }
+
+    return true;
+}

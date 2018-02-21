@@ -69,4 +69,13 @@ namespace grpt{
             const std::vector<Vector2d> vertices, const double rs, 
             std::vector<int> &min_edge, double &mint);
 
+    /// ovm is the overlay mesh, a and b are vertex ids
+    /// xi and yi are the starting and endpoints obviously
+    /// This functions stores which edges lie in which overlay mesh cells 
+    bool bresenham_and_mesh(const std::unordered_map<std::vector<int>, 
+            std::vector<std::vector<int>>, vector_int_hasher> ovm, 
+            const double x1, const double y1, 
+            const double x2, const double y2, 
+            const int a, const int b);
+
 }
