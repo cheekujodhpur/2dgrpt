@@ -11,7 +11,8 @@
 using namespace grpt;
 
 Vector2d random_point(const Vector2d p1, const Vector2d p2, const Vector2d p3) {
-    unsigned short int seed[] = {(short unsigned int)(p1.x()*1e5), (short unsigned int)10005, (short unsigned int)99956};
+    unsigned short int seed[] = {(short unsigned int)(p1.x()*1e5), 
+        (short unsigned int)10005, (short unsigned int)99956};
     double c1 = erand48(seed);
     double c2 = erand48(seed);
     double c3 = erand48(seed);
@@ -19,7 +20,8 @@ Vector2d random_point(const Vector2d p1, const Vector2d p2, const Vector2d p3) {
 }
 
 
-bool check_for_incidence(const std::vector<Vector2d> vertices, const std::vector<int> triangle, 
+bool check_for_incidence(const std::vector<Vector2d> vertices, 
+        const std::vector<int> triangle, 
         const Vector2d point_of_intersection, const double threshold) {
 
     Vector2d a = vertices[triangle[0]];
@@ -39,7 +41,8 @@ bool check_for_incidence(const std::vector<Vector2d> vertices, const std::vector
 }
 
 
-double return_incidence(const std::vector<Vector2d> vertices, const std::vector<int> triangle, 
+double return_incidence(const std::vector<Vector2d> vertices, 
+        const std::vector<int> triangle, 
         const Vector2d point_of_intersection) {
 
     Vector2d a = vertices[triangle[0]];
@@ -55,8 +58,10 @@ double return_incidence(const std::vector<Vector2d> vertices, const std::vector<
     return std::min(std::min(one, two), tre);
 }
 
-bool find_closest_edge(const std::unordered_map<std::vector<int>, std::vector<std::vector<int>>, vector_int_hasher> ovmesh, 
-        const Vector2d pt, const std::vector<Vector2d> vertices, const double rs, 
+bool find_closest_edge(const std::unordered_map<std::vector<int>, 
+        std::vector<std::vector<int>>, vector_int_hasher> ovmesh, 
+        const Vector2d pt, const std::vector<Vector2d> vertices, 
+        const double rs, 
         std::vector<int> &min_edge, double &distance) {
 
     int x = int(pt[0]/rs);
@@ -69,7 +74,11 @@ bool find_closest_edge(const std::unordered_map<std::vector<int>, std::vector<st
     // TODO: Change this hard coding to either +INF or some better estimate
     distance = 10000;
     min_edge = std::vector<int>(0,0);
-    for(std::vector<std::vector<int>>::const_iterator it = ovmesh.at(key).begin(); it != ovmesh.at(key).end(); ++it) {
+
+    for(
+    std::vector<std::vector<int>>::const_iterator it = ovmesh.at(key).begin(); 
+    it != ovmesh.at(key).end(); ++it) {
+
         Vector2d a = vertices[(*it)[0]];
         Vector2d b = vertices[(*it)[1]];
 
@@ -88,8 +97,10 @@ bool find_closest_edge(const std::unordered_map<std::vector<int>, std::vector<st
 
 }
 
-bool find_shooting_edge(const std::unordered_map<std::vector<int>, std::vector<std::vector<int>>, vector_int_hasher> ovmesh, 
-        const Vector2d pt, const Vector2d direction, const std::vector<Vector2d> vertices, const double rs, 
+bool find_shooting_edge(const std::unordered_map<std::vector<int>, 
+        std::vector<std::vector<int>>, vector_int_hasher> ovmesh, 
+        const Vector2d pt, const Vector2d direction, 
+        const std::vector<Vector2d> vertices, const double rs, 
         std::vector<int> &min_edge, double &mint) {
 
     int x = int(pt[0]/rs);
@@ -102,7 +113,11 @@ bool find_shooting_edge(const std::unordered_map<std::vector<int>, std::vector<s
     // TODO: Change this hard coding to either +INF or some better estimate
     mint = 10000;
     min_edge = std::vector<int>(0,0);
-    for(std::vector<std::vector<int>>::const_iterator it = ovmesh.at(key).begin(); it != ovmesh.at(key).end(); ++it) {
+
+    for(
+    std::vector<std::vector<int>>::const_iterator it = ovmesh.at(key).begin();
+    it != ovmesh.at(key).end(); ++it) {
+
         Vector2d a = vertices[(*it)[0]];
         Vector2d b = vertices[(*it)[1]];
 

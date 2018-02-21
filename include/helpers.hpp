@@ -38,26 +38,35 @@ namespace grpt{
     }
 
     /// Returns a random point inside the triangle formed by three points
-    Vector2d random_point(const Vector2d p1, const Vector2d p2, const Vector2d p3);
+    Vector2d random_point(const Vector2d p1, const Vector2d p2, 
+            const Vector2d p3);
 
     /// Check if a point lies on a given triangle or not
-    bool check_for_incidence(const std::vector<Vector2d> vertices, const std::tuple<int> triangle,
+    bool check_for_incidence(const std::vector<Vector2d> vertices, 
+            const std::tuple<int> triangle,
             const Vector2d point_of_intersection, const double threshold);
 
     /// Return the distance from the closest edge in a triangle
-    double return_incidence(const std::vector<Vector2d> vertices, const std::vector<int> triangle,
+    double return_incidence(const std::vector<Vector2d> vertices, 
+            const std::vector<int> triangle,
             const Vector2d point_of_intersection);
 
-    /// Find the closest edge, use overlay mesh (ovmesh) to use a subset of edges
+    /// Find the closest edge, use overlay mesh (ovmesh) to use a 
+    /// subset of edges
     /// rs is the refined size of the overlay mesh 
-    bool find_closest_edge(const std::unordered_map<std::vector<int>, std::vector<std::vector<int>>> ovmesh, 
-            const Vector2d pt, const std::vector<Vector2d> vertices, const double rs, 
+    bool find_closest_edge(const std::unordered_map<std::vector<int>, 
+            std::vector<std::vector<int>>> ovmesh, 
+            const Vector2d pt, const std::vector<Vector2d> vertices, 
+            const double rs, 
             std::vector<int> &min_edge, double &distance);
 
-    /// Find the edge tentatively in the direction specified, use overlay mesh (ovmesh) to use a subset of edges
+    /// Find the edge tentatively in the direction specified, 
+    /// use overlay mesh (ovmesh) to use a subset of edges
     /// rs is the refined size of the overlay mesh 
-    bool find_shooting_edge(const std::unordered_map<std::vector<int>, std::vector<std::vector<int>>, vector_int_hasher> ovmesh, 
-            const Vector2d pt, const Vector2d direction, const std::vector<Vector2d> vertices, const double rs, 
+    bool find_shooting_edge(const std::unordered_map<std::vector<int>, 
+            std::vector<std::vector<int>>, vector_int_hasher> ovmesh, 
+            const Vector2d pt, const Vector2d direction, 
+            const std::vector<Vector2d> vertices, const double rs, 
             std::vector<int> &min_edge, double &mint);
 
 }
