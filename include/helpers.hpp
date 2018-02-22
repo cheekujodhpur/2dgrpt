@@ -37,6 +37,16 @@ namespace grpt{
         return a.x()*b.y()-a.y()*b.x();
     }
 
+	#undef M_PI
+
+	#define M_PI         3.14159265358979323846
+    /// Cast angles to [0, 2pi)
+    inline double anglemod(const double ang) {
+        double modded = fmod(2*M_PI+ang, 2*M_PI);
+        return modded;
+    }
+
+
     /// Returns a random point inside the triangle formed by three points
     Vector2d random_point(const Vector2d p1, const Vector2d p2, 
             const Vector2d p3);
@@ -77,5 +87,9 @@ namespace grpt{
             const double x1, const double y1, 
             const double x2, const double y2, 
             const int a, const int b);
+
+    /// nelder mead optimization for 2-simplex
+    double nelder_mead(const double x1, const double x2, 
+            const double tau, const double *f(const double));
 
 }

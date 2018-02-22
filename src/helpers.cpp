@@ -186,3 +186,61 @@ bool bresenham_and_mesh(std::unordered_map<std::vector<int>,
 
     return true;
 }
+
+double nelder_mead(double x1, double x2, const double tau, 
+        const double *f(const double)) {
+
+    // The parameters for nelder_mead
+    double alpha = 1.0;
+    double gamma = 2;
+    double rho = 0.5;
+    double sigma = 0.5;
+
+    // TODO: define this globally, or maybe as a parameter
+    uint MAX_ITER = 50;
+    uint iter_idx = 0;
+
+    double x0, xr, xe, xc; 
+
+    while(iter_idx++ < MAX_ITER) {
+
+        // Step 1: Order
+        if (f(x1) > f(x2)){
+            std::swap(x1, x2);
+        }
+
+        // TODO: Figure out this number 1e-1 to be something better
+        if (fabs(f(x2)-f(x1)) < tau && fabs(x2-x1) < 1e-1)
+            return 0.5*(x1+x2);
+
+        // Step 2: Centroid
+        x0 = x1;
+
+        // Step 3: Reflection
+        xr = x0 + alpha*(x0-x2);
+
+        if (f(xr) < f(x1)) {
+            xe = x0 + gamma*(xr - x0);
+            if (f(xe) < f(xr)){
+                x2 = xe;
+                continue;
+            }
+            else {
+                x2 = xr;
+                continue;
+            }
+        }
+
+        xc = x0 + rho*(x2-x0);
+        if (f(xc) < f(x2)) {
+            x2 = xc;
+            continue;
+        }
+
+        x2 = x1 + sigma*(x2 - x1);
+    }
+
+    //TODO: Add exxception "[WARN]: max iter reached in nelder mead"
+    return 0.5*(x1+x2);
+
+}
