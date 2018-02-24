@@ -20,6 +20,10 @@ using namespace Eigen;
 
 namespace grpt{
 
+    /// Forward Declarations
+    class Metric;
+    class Mesh;
+
     /// Hash function for a std::vector<int>
     class vector_int_hasher {
         public:
