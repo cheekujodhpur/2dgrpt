@@ -68,6 +68,20 @@ namespace grpt {
         /// Subdivides the mesh
         void submesh(const int n);
 
+        /// Write to a poly file which CMU Triangle can process
+        void write_to_poly(const double k);
+
+        /// Give a call to Triangle binary and refine our mesh
+        /*
+         * We could use triangle directly into our program, but it is written
+         * in C, and uses different data structures than us, and it would
+         * take time to convert all of it. It is not a huge difference if
+         * we write to file, call triangle and read from file versus directly
+         * casting our data into their structures
+         */
+        void refine_using_Triangle(const double min_angle,
+                const double overlay_size);
+
         /// Print all information
         void print();
     };

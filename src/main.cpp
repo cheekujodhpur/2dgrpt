@@ -19,6 +19,8 @@ int main(int argc, char **argv) {
                                      Vector2d(5,5)};
     Mesh myMesh = Mesh(corners, Vector2d(0,0));
     myMesh.submesh(3);
+    myMesh.write_to_poly(0.01);
+    myMesh.refine_using_Triangle(18, 0.05); 
 
     return 0;
 }

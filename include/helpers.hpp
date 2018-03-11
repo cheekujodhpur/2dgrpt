@@ -8,10 +8,15 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <vector>
-#include <unordered_map>
 #include <algorithm>
+#include <array>
+#include <cstdio>
+#include <memory>
+#include <stdexcept>
+#include <stdlib.h>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
@@ -49,6 +54,19 @@ namespace grpt{
         double modded = fmod(2*M_PI+ang, 2*M_PI);
         return modded;
     }
+
+    /// To execute a command
+    inline std::string exec(const char* cmd) {
+        std::array<char, 128> buffer;
+        std::string result;
+        std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
+        if (!pipe) throw std::runtime_error("popen() failed!");
+        while (!feof(pipe.get())) {
+            if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
+                result += buffer.data();
+        }
+        return result;
+    } 
 
     /// Calculate area of a triangle
     double calculate_area(const Vector2d p1, const Vector2d p2, 
