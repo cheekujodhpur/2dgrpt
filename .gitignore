@@ -5,6 +5,8 @@ __pycache__/
 *.o
 *.d
 2dgrpt
+*.swp
+*.swo
 
 # C extensions
 *.so
