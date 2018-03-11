@@ -67,6 +67,9 @@ namespace grpt {
 
         /// Subdivides the mesh
         void submesh(const int n);
+
+        /// Print all information
+        void print();
     };
 
 }

@@ -8,6 +8,7 @@
 
 #include "mesh.hpp"
 #include <algorithm>
+#include <iostream>
 
 using namespace grpt;
 
@@ -147,3 +148,18 @@ void Mesh::submesh(const int n = 1) {
         }
 }
 
+void Mesh::print() {
+
+    std::cout << "Vertices:" << std::endl;
+    for (auto vertex : vertices) {
+        std::cout << vertex.x() << " " << vertex.y() << std::endl;
+    }
+    std::cout << std::endl;
+    std::cout << "Triangles:" << std::endl;
+    for (auto triangle : triangles) {
+        std::cout << triangle[0] << " " << triangle[1] << 
+            " " << triangle[2] << std::endl;
+    }
+    std::cout << std::endl;
+    //TODO: Add more information
+}
