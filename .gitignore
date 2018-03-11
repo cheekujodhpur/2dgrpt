@@ -8,6 +8,12 @@ __pycache__/
 *.swp
 *.swo
 
+# Triangle extensions
+*.ele
+*.neigh
+*.node
+*.poly
+
 # C extensions
 *.so
 
