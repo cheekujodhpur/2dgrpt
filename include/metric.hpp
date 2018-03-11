@@ -21,7 +21,8 @@ namespace grpt {
         Vector2d origin;
 
     public:
-        Metric(Vector2d _origin):origin(_origin){};
+        Metric(){origin=Vector2d(0,0);};
+        Metric(const Vector2d _origin):origin(_origin){};
         Matrix2d compute_metric(const Vector2d position,
                 const std::string type); 
 
