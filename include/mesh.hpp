@@ -64,6 +64,9 @@ namespace grpt {
     public:
         
         Mesh(const std::vector<Vector2d> _corners, const Vector2d _origin);
+
+        /// Subdivides the mesh
+        void submesh(const int n);
     };
 
 }

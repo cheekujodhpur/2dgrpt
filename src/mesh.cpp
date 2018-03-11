@@ -58,3 +58,92 @@ Mesh::Mesh(const std::vector<Vector2d> _corners, const Vector2d _origin) {
 
     metric = Metric(origin);
 }
+
+void Mesh::submesh(const int n = 1) {
+        Metric &m = metric;
+        int index = vertices.size();
+        std::vector<std::vector<int>> new_triangles;
+
+        for (int nit = 0;nit < n;++nit) {
+            new_triangles.clear();
+            for (auto triangle : triangles) {
+                Vector2d p1 = (vertices[triangle[0]] + 
+                        vertices[triangle[1]])/2.;
+
+                Vector2d p2 = (vertices[triangle[1]] + 
+                        vertices[triangle[2]])/2.;
+
+                Vector2d p3 = (vertices[triangle[2]] + 
+                        vertices[triangle[0]])/2.;
+
+                int i1, i2, i3;
+                std::vector<Vector2d>::iterator pit;
+
+                pit = std::find(vertices.begin(), vertices.end(), p1);
+                if ( pit != vertices.end() ) {
+                    i1 = (uint)(pit-vertices.begin());
+                }
+                else {
+                    vertices.push_back(p1);
+                    i1 = index;
+                    index++;
+                }
+
+                pit = std::find(vertices.begin(), vertices.end(), p2);
+                if ( pit != vertices.end() ) {
+                    i2 = (uint)(pit-vertices.begin());
+                }
+                else {
+                    vertices.push_back(p2);
+                    i2 = index;
+                    index++;
+                }
+
+                pit = std::find(vertices.begin(), vertices.end(), p3);
+                if ( pit != vertices.end() ) {
+                    i3 = (uint)(pit-vertices.begin());
+                }
+                else {
+                    vertices.push_back(p3);
+                    i3 = index;
+                    index++;
+                }
+                std::vector<int> tmp = {i1, i2, i3};
+                new_triangles.push_back(tmp);
+                tmp.clear();
+                tmp.push_back(i1);tmp.push_back(triangle[1]);tmp.push_back(i2);
+                new_triangles.push_back(tmp);
+                tmp.clear();
+                tmp.push_back(i2);tmp.push_back(triangle[2]);tmp.push_back(i3);
+                new_triangles.push_back(tmp);
+                tmp.clear();
+                tmp.push_back(i3);tmp.push_back(triangle[0]);tmp.push_back(i1);
+                new_triangles.push_back(tmp);
+            }
+            triangles = new_triangles;
+        }
+
+        for (auto triangle : triangles) {
+            std::vector<int> striangle = triangle;
+            std::sort(striangle.begin(), striangle.end());
+            
+            std::vector<int> tmp;
+            tmp.push_back(striangle[0]); tmp.push_back(striangle[1]);
+            edges.push_back(tmp);
+            tmp.clear();
+            tmp.push_back(striangle[1]); tmp.push_back(striangle[2]);
+            edges.push_back(tmp);
+            tmp.clear();
+            tmp.push_back(striangle[2]); tmp.push_back(striangle[0]);
+            edges.push_back(tmp);
+
+            Vector2d center =(vertices[striangle[0]]+
+                              vertices[striangle[1]]+
+                              vertices[striangle[2]])/3.;
+
+            Matrix2d g = m.compute_metric(center, "a2");
+
+            regions.push_back(std::make_tuple(center, sqrt(g.determinant())));
+        }
+}
+

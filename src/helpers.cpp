@@ -10,6 +10,17 @@
 
 using namespace grpt;
 
+double calculate_area(const Vector2d p1, const Vector2d p2, 
+        const Vector2d p3) {
+
+    Matrix3d area_mat;
+    area_mat << 1, p1.x(), p1.y(),
+                1, p2.x(), p2.y(),
+                1, p3.x(), p3.y();
+
+    return 0.5*fabs(area_mat.determinant());
+}
+
 Vector2d random_point(const Vector2d p1, const Vector2d p2, const Vector2d p3) {
     unsigned short int seed[] = {(short unsigned int)(p1.x()*1e5), 
         (short unsigned int)10005, (short unsigned int)99956};

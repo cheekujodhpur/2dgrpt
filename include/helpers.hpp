@@ -50,6 +50,10 @@ namespace grpt{
         return modded;
     }
 
+    /// Calculate area of a triangle
+    double calculate_area(const Vector2d p1, const Vector2d p2, 
+            const Vector2d p3);
+
 
     /// Returns a random point inside the triangle formed by three points
     Vector2d random_point(const Vector2d p1, const Vector2d p2, 
