@@ -8,6 +8,7 @@
 
 #include "mesh.hpp"
 #include "helpers.hpp"
+#include "matplotlibcpp.hpp"
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -335,6 +336,17 @@ void Mesh::churn_edge_data() {
     }
 }
 
+void Mesh::draw(){
+
+    std::vector<double> X,Y;
+    for (auto vertex : vertices) {
+        X.push_back(vertex.x());
+        Y.push_back(vertex.y());
+    }
+    namespace plt = matplotlibcpp;
+    plt::plot(X,Y);
+    plt::show();
+}
 
 void Mesh::print() {
 

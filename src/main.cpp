@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
     myMesh.refine_using_Triangle(18, 0.05); 
 
     // myMesh.print();
+    // myMesh.draw();
 
     return 0;
 }

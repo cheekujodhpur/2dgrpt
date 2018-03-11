@@ -85,6 +85,9 @@ namespace grpt {
         /// Converting deviation data to interpolators wrt input angle
         void churn_edge_data();
 
+        /// Plot the mesh
+        void draw();
+
         /// Print all information
         void print();
     };

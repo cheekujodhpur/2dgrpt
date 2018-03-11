@@ -29,11 +29,12 @@ EIGEN_INCLUDE=/usr/include/eigen3
 # TINYXML2_INCLUDE=$(EXTDIR)/tinyxml2
 # FILESYSTEM_INCLUDE=$(EXTDIR)/filesystem
 # EXTMODULES=$(EXTDIR)/tinyxml2
+MPLIB_INCLUDE=/usr/include/python2.7
 
 # Compiler and Linker flags
 LDFLAGS=-L/usr/local/lib
 
-CPPFLAGS=-I$(EIGEN_INCLUDE) -I$(INCDIR)
+CPPFLAGS=-I$(MPLIB_INCLUDE) -I$(EIGEN_INCLUDE) -I$(INCDIR)
 CPPFLAGS+=-O3 -Wall -std=c++11
 
 ######################################
@@ -65,7 +66,7 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	@$(PRINTF) "$(MESG_COLOR)Building executable:$(NO_COLOR) $(FILE_COLOR) %16s$(NO_COLOR)" "$(notdir $@)"
-	@$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LIBS) 2> temp.log || touch temp.err
+	@$(CC) -o $@ $(LDFLAGS) $(OBJS) -lpython2.7 $(LIBS) 2> temp.log || touch temp.err
 	@if test -e temp.err; \
 	then $(PRINTF) $(ERR_FMT) $(ERR_STRING) && $(CAT) temp.log; \
 	elif test -s temp.log; \
