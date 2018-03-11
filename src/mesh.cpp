@@ -14,6 +14,8 @@
 #include <fstream>
 #include <boost/numeric/odeint.hpp>
 
+#define N_CHECKS 5
+
 using namespace grpt;
 
 Mesh::Mesh(const std::vector<Vector2d> _corners, const Vector2d _origin) {
@@ -369,17 +371,155 @@ double Mesh::find_trial_error(const double mod, const double dt,
         const int t_id, const Vector2d startpoint, 
         const Vector2d covdir, bool save, bool dbg) {
     
+    auto sorting_corners_1 = [](Vector2d i,
+            Vector2d j){ return (i.x()<j.x()); };
+    std::sort(corners.begin(), corners.end(), 
+            sorting_corners_1);
+
+    double _lx, _rx, _ly, _ry;
+    _lx = corners[0].x();
+    _rx = corners[corners.size()-1].x();
+
+    auto sorting_corners_2 = [](Vector2d i,
+            Vector2d j){ return (i.y()<j.y()); };
+    std::sort(corners.begin(), corners.end(), 
+            sorting_corners_2);
+    _ly = corners[0].y();
+    _ry = corners[corners.size()-1].y();
+
+    std::vector<int> this_triangle = triangles[t_id];
+
+    std::vector<std::vector<double>> result;
+
     boost::numeric::odeint::runge_kutta4 < std::vector<double> > rk;    
     std::vector<double> state(4);
     state[0] = startpoint.x();
     state[1] = startpoint.y();
     state[2] = covdir.x();
     state[3] = covdir.y();
-
     // Initial time
-    int t=0;
-    // Take a step
-    rk.do_step(metric, state, t, dt);
+    int rk_t=0;
 
-    return 0;
+    result.push_back(state);
+
+    // Take a step
+    rk.do_step(metric, state, rk_t, dt);
+    rk_t += dt;
+    result.push_back(state);
+
+    Vector2d direction = (Vector2d(result[1][0], result[1][1]) - startpoint).normalized();
+
+    Vector2d a = vertices[this_triangle[0]];
+    Vector2d b = vertices[this_triangle[1]];
+    Vector2d c = vertices[this_triangle[2]];
+
+    std::vector<int> local_edge;
+
+    double t = cross(a-startpoint, b-a)/cross(direction,b-a);
+    double s = cross(a-startpoint, direction)/cross(direction, b-a);
+    if (t <= 1 && s >= 0) {
+        local_edge.push_back(this_triangle[0]);
+        local_edge.push_back(this_triangle[1]);
+    }
+    else {
+        t = cross(b-startpoint, c-b)/cross(direction,c-b);
+        s = cross(b-startpoint, direction)/cross(direction, c-b);
+        if (t <= 1 && s >= 0) {
+            local_edge.push_back(this_triangle[1]);
+            local_edge.push_back(this_triangle[2]);
+        }
+        else {
+            t = cross(c-startpoint, a-c)/cross(direction,a-c);
+            s = cross(c-startpoint, direction)/cross(direction, a-c);
+            if (t <= 1 && s >= 0) {
+                local_edge.push_back(this_triangle[2]);
+                local_edge.push_back(this_triangle[0]);
+            }
+            else {
+                std::cout << "[WARN] Segment empty" << std::endl;
+            }
+        }
+    }
+
+    Vector2d point_of_intersection = startpoint + t*direction*(1.+1e-5);
+    
+    // modify now
+    Vector2d new_dir(cos(mod), sin(mod));
+
+    // Save if flag set
+    if (save) {
+        std::sort(local_edge.begin(), local_edge.end());
+        std::vector<Vector2d> tmp = {new_dir-direction, direction};
+        edge_data[local_edge].push_back(tmp);
+    }
+    
+    if (dbg && save) {
+        std::cout << "[DBG]" << " "
+                  << mod*180./M_PI << " "
+                  << new_dir-direction << " "
+                  << direction << std::endl;
+    }
+
+    if (dbg) {
+        std::cout << "[DBG]" << " "
+                  << mod*180./M_PI;
+    }
+
+    std::vector<std::vector<double>> dev_result;
+
+    boost::numeric::odeint::runge_kutta4 < std::vector<double> > dev_rk;    
+    std::vector<double> dev_state(4);
+
+    new_dir.x() = new_dir.x()*point_of_intersection.x();
+    new_dir.normalize();
+
+    dev_state[0] = point_of_intersection.x();
+    dev_state[1] = point_of_intersection.y();
+    dev_state[2] = new_dir.x();
+    dev_state[3] = new_dir.y();
+    // Initial time
+    int dev_rk_t=0;
+
+    dev_result.push_back(dev_state);
+
+    int Ni = 0;
+    while (Ni < N_CHECKS && _lx < dev_state[0]
+            && dev_state[0] < _rx 
+            && _ly < dev_state[1]
+            && dev_state[1]  < _ry) {
+
+        dev_rk.do_step(metric, dev_state, dev_rk_t, dt);
+        dev_rk_t += dt;
+        dev_result.push_back(dev_state);
+        Ni++;
+    }
+
+    Ni = 0;
+    while (Ni < N_CHECKS && _lx < state[0]
+            && state[0] < _rx 
+            && _ly < state[1]
+            && state[1]  < _ry) {
+
+        rk.do_step(metric, state, rk_t, dt);
+        rk_t += dt;
+        result.push_back(state);
+        Ni++;
+    }
+
+
+    // Compare target angle versus calculated angle
+    Vector2d targetf(result[result.size()-1][0], result[result.size()-1][1]);
+    Vector2d targeti(result[0][0], result[0][1]);
+
+    Vector2d target = targetf-targeti;
+    double target_angle = atan2(target.y(), target.x());
+
+    Vector2d calcuf(dev_result[dev_result.size()-1][0], 
+            dev_result[dev_result.size()-1][1]);
+    Vector2d calcui(dev_result[0][0], dev_result[0][1]);
+
+    Vector2d calcu = calcuf-calcui;
+    double calcu_angle = atan2(calcu.y(), calcu.x());
+
+    return fabs(target_angle-calcu_angle);
 }
