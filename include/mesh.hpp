@@ -32,7 +32,7 @@ namespace grpt {
         Metric metric;
 
         /// Indices of neighbouring triangles in the list of triangles
-        std::vector<int> neighbours;
+        std::vector<std::vector<int>> neighbours;
 
         /// Overlay mesh (effectively kd tree)
         std::unordered_map<std::vector<int>, std::vector<std::vector<int>>, vector_int_hasher> overlay_mesh;
