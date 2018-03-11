@@ -7,6 +7,7 @@
 */
 
 #include "mesh.hpp"
+#include "helpers.hpp"
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -252,9 +253,88 @@ void Mesh::refine_using_Triangle(const double min_angle,
     }
     neighbours = all_neighs;
     neifile.close();
-    
-    //TODO: There is the overlay mesh code also there
+
+    // Fill the overlay mesh
+    for (auto tl : triangles) {
+
+        double x1,x2,y1,y2;
+        int a,b;
+        x1 = vertices[tl[0]].x()/overlay_size;
+        y1 = vertices[tl[0]].y()/overlay_size;
+
+        x2 = vertices[tl[1]].x()/overlay_size;
+        y2 = vertices[tl[1]].y()/overlay_size;
+
+        a = tl[0] < tl[1] ? tl[0] : tl[1];
+        b = tl[0] < tl[1] ? tl[1] : tl[0];
+        bresenham_and_mesh(overlay_mesh, x1, y1, x2, y2, a, b);
+
+        x1 = vertices[tl[1]].x()/overlay_size;
+        y1 = vertices[tl[1]].y()/overlay_size;
+
+        x2 = vertices[tl[2]].x()/overlay_size;
+        y2 = vertices[tl[2]].y()/overlay_size;
+
+        a = tl[1] < tl[2] ? tl[1] : tl[2];
+        b = tl[1] < tl[2] ? tl[2] : tl[1];
+        bresenham_and_mesh(overlay_mesh, x1, y1, x2, y2, a, b);
+
+        x1 = vertices[tl[2]].x()/overlay_size;
+        y1 = vertices[tl[2]].y()/overlay_size;
+
+        x2 = vertices[tl[0]].x()/overlay_size;
+        y2 = vertices[tl[0]].y()/overlay_size;
+
+        a = tl[2] < tl[0] ? tl[2] : tl[0];
+        b = tl[2] < tl[0] ? tl[0] : tl[2];
+        bresenham_and_mesh(overlay_mesh, x1, y1, x2, y2, a, b);
+
+    }
+
 }
+
+
+void Mesh::churn_edge_data() {
+
+    for (auto one_edge_data : edge_data) {
+        std::vector<std::vector<Vector2d>> all_samples = one_edge_data.second;
+        std::vector<std::vector<double>> anglesamples;
+        for (auto sample : all_samples) {
+            double input_angle = anglemod(atan2(sample[1].y(), sample[1].x()));
+            double output_angle = anglemod(atan2(sample[0].y()+sample[1].y(),
+                        sample[0].x()+sample[1].x()));
+
+            std::vector<double> tmp = {input_angle, output_angle};
+            anglesamples.push_back(tmp);
+        }
+        auto sorting_angles = [](std::vector<double> i,
+                std::vector<double> j){ return (i[0]<j[0]); };
+
+        std::sort(anglesamples.begin(), anglesamples.end(), sorting_angles);
+        std::vector<std::vector<double>> slopesamples; 
+
+        int N = anglesamples.size();
+
+        for(int i = 0;i<N-1;i++) {
+            double m = (anglesamples[i+1][1]-anglesamples[i][1])/
+                (anglesamples[i+1][0]-anglesamples[i][0]);
+            double b = anglesamples[i][1] - m*anglesamples[i][0];
+            // already sorted by input_angle
+            std::vector<double> tmp = {anglesamples[i+1][0], m, b};
+            slopesamples.push_back(tmp);
+        }
+
+        if (N > 1) {
+            double m = (anglesamples[N-1][1]-anglesamples[0][1])/
+                (anglesamples[N-1][0]-anglesamples[0][0]);
+            double b = anglesamples[0][1] - m*anglesamples[0][0];
+            std::vector<double> tmp = {anglesamples[0][0], m, b};
+            slopesamples.push_back(tmp);
+        }
+        edge_slope_data[one_edge_data.first] = slopesamples;
+    }
+}
+
 
 void Mesh::print() {
 

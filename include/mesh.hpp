@@ -82,6 +82,9 @@ namespace grpt {
         void refine_using_Triangle(const double min_angle,
                 const double overlay_size);
 
+        /// Converting deviation data to interpolators wrt input angle
+        void churn_edge_data();
+
         /// Print all information
         void print();
     };

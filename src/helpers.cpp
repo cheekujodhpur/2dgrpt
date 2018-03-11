@@ -8,9 +8,7 @@
 
 #include "helpers.hpp"
 
-using namespace grpt;
-
-double calculate_area(const Vector2d p1, const Vector2d p2, 
+double grpt::calculate_area(const Vector2d p1, const Vector2d p2, 
         const Vector2d p3) {
 
     Matrix3d area_mat;
@@ -21,7 +19,7 @@ double calculate_area(const Vector2d p1, const Vector2d p2,
     return 0.5*fabs(area_mat.determinant());
 }
 
-Vector2d random_point(const Vector2d p1, const Vector2d p2, const Vector2d p3) {
+Vector2d grpt::random_point(const Vector2d p1, const Vector2d p2, const Vector2d p3) {
     unsigned short int seed[] = {(short unsigned int)(p1.x()*1e5), 
         (short unsigned int)10005, (short unsigned int)99956};
     double c1 = erand48(seed);
@@ -31,7 +29,7 @@ Vector2d random_point(const Vector2d p1, const Vector2d p2, const Vector2d p3) {
 }
 
 
-bool check_for_incidence(const std::vector<Vector2d> vertices, 
+bool grpt::check_for_incidence(const std::vector<Vector2d> vertices, 
         const std::vector<int> triangle, 
         const Vector2d point_of_intersection, const double threshold) {
 
@@ -52,7 +50,7 @@ bool check_for_incidence(const std::vector<Vector2d> vertices,
 }
 
 
-double return_incidence(const std::vector<Vector2d> vertices, 
+double grpt::return_incidence(const std::vector<Vector2d> vertices, 
         const std::vector<int> triangle, 
         const Vector2d point_of_intersection) {
 
@@ -69,7 +67,7 @@ double return_incidence(const std::vector<Vector2d> vertices,
     return std::min(std::min(one, two), tre);
 }
 
-bool find_closest_edge(const std::unordered_map<std::vector<int>, 
+bool grpt::find_closest_edge(const std::unordered_map<std::vector<int>, 
         std::vector<std::vector<int>>, vector_int_hasher> ovmesh, 
         const Vector2d pt, const std::vector<Vector2d> vertices, 
         const double rs, 
@@ -108,7 +106,7 @@ bool find_closest_edge(const std::unordered_map<std::vector<int>,
 
 }
 
-bool find_shooting_edge(const std::unordered_map<std::vector<int>, 
+bool grpt::find_shooting_edge(const std::unordered_map<std::vector<int>, 
         std::vector<std::vector<int>>, vector_int_hasher> ovmesh, 
         const Vector2d pt, const Vector2d direction, 
         const std::vector<Vector2d> vertices, const double rs, 
@@ -149,7 +147,7 @@ bool find_shooting_edge(const std::unordered_map<std::vector<int>,
 
 }
 
-bool bresenham_and_mesh(std::unordered_map<std::vector<int>, 
+bool grpt::bresenham_and_mesh(std::unordered_map<std::vector<int>, 
         std::vector<std::vector<int>>, vector_int_hasher> &ovm, 
         const double x1, const double y1, 
         const double x2, const double y2, 
@@ -198,7 +196,7 @@ bool bresenham_and_mesh(std::unordered_map<std::vector<int>,
     return true;
 }
 
-double nelder_mead(double x1, double x2, const double tau, 
+double grpt::nelder_mead(double x1, double x2, const double tau, 
         const double *f(const double)) {
 
     // The parameters for nelder_mead

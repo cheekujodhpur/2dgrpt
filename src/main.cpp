@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
     myMesh.write_to_poly(0.01);
     myMesh.refine_using_Triangle(18, 0.05); 
 
-    myMesh.print();
+    // myMesh.print();
 
     return 0;
 }

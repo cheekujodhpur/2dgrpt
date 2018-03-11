@@ -79,7 +79,7 @@ namespace grpt{
 
     /// Check if a point lies on a given triangle or not
     bool check_for_incidence(const std::vector<Vector2d> vertices, 
-            const std::tuple<int> triangle,
+            const std::vector<int> triangle,
             const Vector2d point_of_intersection, const double threshold);
 
     /// Return the distance from the closest edge in a triangle
@@ -91,7 +91,7 @@ namespace grpt{
     /// subset of edges
     /// rs is the refined size of the overlay mesh 
     bool find_closest_edge(const std::unordered_map<std::vector<int>, 
-            std::vector<std::vector<int>>> ovmesh, 
+            std::vector<std::vector<int>>, vector_int_hasher> ovmesh, 
             const Vector2d pt, const std::vector<Vector2d> vertices, 
             const double rs, 
             std::vector<int> &min_edge, double &distance);
@@ -108,8 +108,8 @@ namespace grpt{
     /// ovm is the overlay mesh, a and b are vertex ids
     /// xi and yi are the starting and endpoints obviously
     /// This functions stores which edges lie in which overlay mesh cells 
-    bool bresenham_and_mesh(const std::unordered_map<std::vector<int>, 
-            std::vector<std::vector<int>>, vector_int_hasher> ovm, 
+    bool bresenham_and_mesh(std::unordered_map<std::vector<int>, 
+            std::vector<std::vector<int>>, vector_int_hasher> &ovm, 
             const double x1, const double y1, 
             const double x2, const double y2, 
             const int a, const int b);
