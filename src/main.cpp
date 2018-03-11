@@ -24,6 +24,7 @@ int main(int argc, char **argv) {
 
     // myMesh.print();
     // myMesh.draw();
+    // myMesh.find_trial_error(0,0.01,0,Vector2d(0.55,0.13), Vector2d(0.7,0.7));
 
     return 0;
 }

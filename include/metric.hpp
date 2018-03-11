@@ -26,5 +26,10 @@ namespace grpt {
         Matrix2d compute_metric(const Vector2d position,
                 const std::string type); 
 
+        void operator()( const std::vector<double> &x, 
+                std::vector<double> &dxdt, 
+                const double /* t */);
+
+
     };
 }

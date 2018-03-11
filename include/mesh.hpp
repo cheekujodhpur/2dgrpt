@@ -90,6 +90,11 @@ namespace grpt {
 
         /// Print all information
         void print();
+
+        /// Find trial error
+        double find_trial_error(const double mod, const double dt, 
+                const int t_id, const Vector2d startpoint, 
+                const Vector2d covdir, bool save=false, bool dbg=false);
     };
 
 }

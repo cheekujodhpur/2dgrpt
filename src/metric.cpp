@@ -32,3 +32,14 @@ Matrix2d Metric::compute_metric(const Vector2d position,
 
     return g;
 }
+
+void Metric::operator()( const std::vector<double> &x, 
+                std::vector<double> &dxdt, 
+                const double /* t */) {
+
+    dxdt[0] = x[2]; 
+    dxdt[1] = x[3]/x[0];
+    dxdt[2] = 0.5*(x[3]*x[3])/(x[0]*x[0]);
+    dxdt[3] = 0;
+}
+

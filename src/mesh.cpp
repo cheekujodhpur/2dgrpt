@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <boost/numeric/odeint.hpp>
 
 using namespace grpt;
 
@@ -362,4 +363,23 @@ void Mesh::print() {
     }
     std::cout << std::endl;
     //TODO: Add more information
+}
+
+double Mesh::find_trial_error(const double mod, const double dt, 
+        const int t_id, const Vector2d startpoint, 
+        const Vector2d covdir, bool save, bool dbg) {
+    
+    boost::numeric::odeint::runge_kutta4 < std::vector<double> > rk;    
+    std::vector<double> state(4);
+    state[0] = startpoint.x();
+    state[1] = startpoint.y();
+    state[2] = covdir.x();
+    state[3] = covdir.y();
+
+    // Initial time
+    int t=0;
+    // Take a step
+    rk.do_step(metric, state, t, dt);
+
+    return 0;
 }
