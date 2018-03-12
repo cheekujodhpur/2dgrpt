@@ -35,5 +35,9 @@ int main(int argc, char **argv) {
         std::cerr << "done." << std::endl;
     }
 
+    for(int i=0;i<5;i++) {
+        myMesh.throw_geodesic_discrete();
+    }
+
     return 0;
 }

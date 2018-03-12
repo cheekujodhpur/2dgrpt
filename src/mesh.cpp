@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <ctime>
 #include <boost/numeric/odeint.hpp>
 
 #define N_CHECKS 5
@@ -470,7 +471,7 @@ double Mesh::find_trial_error(const double mod, const double dt,
     boost::numeric::odeint::runge_kutta4 < std::vector<double> > dev_rk;    
     std::vector<double> dev_state(4);
 
-    new_dir.x() = new_dir.x()*point_of_intersection.x();
+    new_dir.y() = new_dir.y()*point_of_intersection.x();
     new_dir.normalize();
 
     dev_state[0] = point_of_intersection.x();
@@ -552,7 +553,7 @@ void Mesh::throw_geodesic_mark(const int seed, const double tau,
     };
 
     Vector2d contradir = covdir;
-    contradir.x() = contradir.x()*startpoint.x();
+    contradir.y() = contradir.y()*startpoint.x();
     contradir.normalize();
 
     double one_angle = atan2(contradir.y(), contradir.x());
@@ -575,4 +576,195 @@ void Mesh::throw_geodesic_mark(const int seed, const double tau,
             << std::endl;
     }
 
+}
+
+void Mesh::throw_geodesic_discrete(void) {
+
+    int num_triangle = triangles.size();
+    typedef unsigned short int usint;
+    usint rand_seed[3] = {0, usint(12021997), usint(std::time(nullptr))};
+    // triangle id
+    int t_id = int(erand48(rand_seed)*num_triangle);
+    std::vector<int> this_triangle = triangles[t_id];
+
+    // Start point randomly chosen
+    Vector2d startpoint = random_point(
+            vertices[this_triangle[0]],
+            vertices[this_triangle[1]],
+            vertices[this_triangle[2]]
+            );
+
+    Vector2d direction = Vector2d(erand48(rand_seed)*2-1, 
+            erand48(rand_seed)*2-1);
+    // Renormalizing
+    direction.normalize();
+
+    auto sorting_corners_1 = [](Vector2d i,
+            Vector2d j){ return (i.x()<j.x()); };
+    std::sort(corners.begin(), corners.end(), 
+            sorting_corners_1);
+
+    double _lx, _rx, _ly, _ry;
+    _lx = corners[0].x();
+    _rx = corners[corners.size()-1].x();
+
+    auto sorting_corners_2 = [](Vector2d i,
+            Vector2d j){ return (i.y()<j.y()); };
+    std::sort(corners.begin(), corners.end(), 
+            sorting_corners_2);
+    _ly = corners[0].y();
+    _ry = corners[corners.size()-1].y();
+
+
+    // The integrator
+    std::vector<std::vector<double>> result;
+
+    boost::numeric::odeint::runge_kutta4 < std::vector<double> > rk;    
+    std::vector<double> state(4);
+    state[0] = startpoint.x();
+    state[1] = startpoint.y();
+    state[2] = direction.x();
+    state[3] = direction.y();
+
+    // Initial time
+    int rk_t=0;
+    double dt = 0.01;
+
+    result.push_back(state);
+
+    while (_lx < state[0]
+            && state[0] < _rx 
+            && _ly < state[1]
+            && state[1]  < _ry) {
+
+        rk.do_step(metric, state, rk_t, dt);
+        rk_t += dt;
+        result.push_back(state);
+    }
+
+    direction = (Vector2d(result[1][0], result[1][1])
+            - startpoint).normalized();
+
+
+    int count_checker = 0;
+    while(true) {
+
+        Vector2d a = vertices[this_triangle[0]];
+        Vector2d b = vertices[this_triangle[1]];
+        Vector2d c = vertices[this_triangle[2]];
+
+        std::vector<int> local_edge;
+
+        double t = cross(a-startpoint, b-a)/cross(direction,b-a);
+        double s = cross(a-startpoint, direction)/cross(direction, b-a);
+        if (t <= 1 && s >= 0) {
+            local_edge.push_back(this_triangle[0]);
+            local_edge.push_back(this_triangle[1]);
+        }
+        else {
+            t = cross(b-startpoint, c-b)/cross(direction,c-b);
+            s = cross(b-startpoint, direction)/cross(direction, c-b);
+            if (t <= 1 && s >= 0) {
+                local_edge.push_back(this_triangle[1]);
+                local_edge.push_back(this_triangle[2]);
+            }
+            else {
+                t = cross(c-startpoint, a-c)/cross(direction,a-c);
+                s = cross(c-startpoint, direction)/cross(direction, a-c);
+                if (t <= 1 && s >= 0) {
+                    local_edge.push_back(this_triangle[2]);
+                    local_edge.push_back(this_triangle[0]);
+                }
+                else {
+                    std::cout << "[WARN] Segment empty" << std::endl;
+                }
+            }
+        }
+
+        Vector2d point_of_intersection = startpoint + t*direction*(1.+1e-5);
+        Vector2d ndir;
+
+        std::sort(local_edge.begin(), local_edge.end());
+
+        if (edge_data[local_edge].size()<2) {
+
+            std::cout << "[WARN] Sad you didn't sample enough boi..."
+                << std::endl;
+
+            // TODO: this whole section is a scam
+            Vector2d cov_direction = Vector2d(direction.x(), 
+                    direction.y()*startpoint.x()).normalized();
+
+            boost::numeric::odeint::runge_kutta4 < std::vector<double> > rk_ad;    
+            std::vector<double> state_ad(4);
+
+            Vector2d trialpt = startpoint - 0.025*direction;
+
+            state_ad[0] = trialpt.x();
+            state_ad[1] = trialpt.y();
+            state_ad[2] = cov_direction.x();
+            state_ad[3] = cov_direction.y();
+
+            int rk_ad_t=0;
+            rk_ad.do_step(metric, state_ad, rk_ad_t, 0.025);
+
+            ndir = Vector2d(state_ad[0], state_ad[1])-trialpt;
+        }
+
+        else {
+            // Lagrange interpolation
+            std::vector<std::vector<double>> entry = 
+                edge_slope_data[local_edge];
+
+            int _n = entry.size();
+
+            double in_ang = anglemod(atan2(direction.y(), direction.x()));
+            ndir = Vector2d(-2,-2);
+
+            if (entry[_n-1][0] <= in_ang && in_ang < entry[0][0]) {
+                double n_ang = anglemod(entry[0][1]*in_ang + entry[0][2]);
+                ndir = Vector2d(cos(n_ang), sin(n_ang));
+            }
+            else {
+
+                for(int i = 1;i<_n-1;++i) {
+                    if (entry[i-1][0] <= in_ang && in_ang < entry[i][0]) {
+                        double n_ang = anglemod(entry[i][1]*in_ang + 
+                                entry[i][2]);
+                        ndir = Vector2d(cos(n_ang), sin(n_ang));
+                        break;
+                    }
+                }
+            }
+            if (ndir.x()==-2) {
+                double n_ang = anglemod(entry[_n-1][1]*in_ang + 
+                        entry[_n-1][2]);
+                ndir = Vector2d(cos(n_ang), sin(n_ang));
+            }
+
+        }
+
+
+        // TODO: Maybe parameterize this 1e-4
+        // In earlier implementation, there could be returned multiple neighs
+        // We picking the first one here
+        for (auto neighbour : neighbours[t_id]) {
+            if (check_for_incidence(vertices, triangles[neighbour],
+                        point_of_intersection, 1e-4)){
+                t_id = neighbour;
+                break;
+            }
+        }
+
+        startpoint = point_of_intersection;
+        this_triangle = triangles[t_id];
+
+        direction = ndir.normalized();
+
+        count_checker++;
+        if (count_checker>=500) {
+            std::cerr << "Exit as loop exceeded threshold..." << std::endl;
+            break;
+        }
+    }
 }

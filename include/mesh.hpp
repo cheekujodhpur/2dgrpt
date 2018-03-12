@@ -102,6 +102,9 @@ namespace grpt {
         /// Throw a geodesic and mark the data on edge
         void throw_geodesic_mark(const int seed, const double tau, 
                 double dt=0.01);
+
+        /// Actually throw a discrete geodesic to check state
+        void throw_geodesic_discrete(void);
     };
 
 }
