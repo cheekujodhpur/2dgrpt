@@ -65,6 +65,9 @@ namespace grpt {
         
         Mesh(const std::vector<Vector2d> _corners, const Vector2d _origin);
 
+        /// Fetch number of triangles
+        int get_num_triangles(void){return triangles.size();};
+
         /// Subdivides the mesh
         void submesh(const int n);
 
@@ -95,6 +98,10 @@ namespace grpt {
         double find_trial_error(const double mod, const double dt, 
                 const int t_id, const Vector2d startpoint, 
                 const Vector2d covdir, bool save=false, bool dbg=false);
+
+        /// Throw a geodesic and mark the data on edge
+        void throw_geodesic_mark(const int seed, const double tau, 
+                double dt=0.01);
     };
 
 }

@@ -523,3 +523,54 @@ double Mesh::find_trial_error(const double mod, const double dt,
 
     return fabs(target_angle-calcu_angle);
 }
+
+void Mesh::throw_geodesic_mark(const int seed, const double tau, 
+        double dt) {
+
+    int num_triangle = triangles.size();
+    //triangle_id
+    int t_id = seed % num_triangle; 
+    std::vector<int> this_triangle = triangles[t_id];
+
+    // Start point randomly chosen
+    Vector2d startpoint = random_point(
+            vertices[this_triangle[0]],
+            vertices[this_triangle[1]],
+            vertices[this_triangle[2]]
+            );
+
+    // Choosing a random direction
+    typedef unsigned short int usint;
+    usint rand_seed[3] = {usint(seed), usint(seed*seed),
+        usint(seed*seed*seed)};
+    Vector2d covdir = Vector2d(erand48(rand_seed), erand48(rand_seed));
+    // Renormalizing
+    covdir.normalize();
+
+    auto f_minimizer = [=](double x)->double{ 
+        return find_trial_error(x, dt, t_id, startpoint, covdir); 
+    };
+
+    Vector2d contradir = covdir;
+    contradir.x() = contradir.x()*startpoint.x();
+    contradir.normalize();
+
+    double one_angle = atan2(contradir.y(), contradir.x());
+    std::cout << "[DBG] Input Angle: " << one_angle*180./M_PI << std::endl;
+    double margin = 0.5;
+
+    double result = nelder_mead(one_angle-margin*M_PI, 
+            one_angle+margin*M_PI, tau, f_minimizer);
+
+    while (find_trial_error(result, dt, t_id, startpoint, covdir)>tau && 
+            margin>=0.2) {
+
+        margin = margin-0.1;
+        std::cout <<  "[DBG] Margin reduced to" << margin << std::endl;
+        result = nelder_mead(one_angle-margin*M_PI, one_angle+margin*M_PI, 
+                tau, f_minimizer);
+
+        find_trial_error(result, dt, t_id, startpoint, covdir, true);
+    }
+
+}
