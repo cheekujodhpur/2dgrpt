@@ -251,7 +251,7 @@ void Mesh::refine_using_Triangle(const double min_angle,
             int tmp_x;
             neifile >> tmp_x;
             if (tmp_x != -1)
-                tmp_vec.push_back(tmp_x);
+                tmp_vec.push_back(tmp_x-1);
         }
 
         all_neighs.push_back(tmp_vec);
@@ -442,7 +442,7 @@ double Mesh::find_trial_error(const double mod, const double dt,
         }
     }
 
-    Vector2d point_of_intersection = startpoint + t*direction*(1.+1e-5);
+    Vector2d point_of_intersection = startpoint + t*direction;
     
     // modify now
     Vector2d new_dir(cos(mod), sin(mod));
@@ -571,14 +571,20 @@ void Mesh::throw_geodesic_mark(const int seed, const double tau,
         result = nelder_mead(one_angle-margin*M_PI, one_angle+margin*M_PI, 
                 tau, f_minimizer);
 
-        std::cerr << "[DBG] Saving with error " << 
-            find_trial_error(result, dt, t_id, startpoint, covdir, true) 
-            << std::endl;
     }
+    std::cerr << "[DBG] Saving with error " << 
+        find_trial_error(result, dt, t_id, startpoint, covdir, true) 
+        << std::endl;
 
 }
 
 void Mesh::throw_geodesic_discrete(void) {
+
+    // Arrangements for plotting
+    namespace plt = matplotlibcpp;
+
+    // discrete and continuous X,Y
+    std::vector<double> X_d, Y_d, X_c, Y_c;
 
     int num_triangle = triangles.size();
     typedef unsigned short int usint;
@@ -620,8 +626,7 @@ void Mesh::throw_geodesic_discrete(void) {
     std::vector<std::vector<double>> result;
 
     boost::numeric::odeint::runge_kutta4 < std::vector<double> > rk;    
-    std::vector<double> state(4);
-    state[0] = startpoint.x();
+    std::vector<double> state(4); state[0] = startpoint.x();
     state[1] = startpoint.y();
     state[2] = direction.x();
     state[3] = direction.y();
@@ -640,6 +645,11 @@ void Mesh::throw_geodesic_discrete(void) {
         rk.do_step(metric, state, rk_t, dt);
         rk_t += dt;
         result.push_back(state);
+    }
+
+    for(int i = 0;i<result.size();++i){
+        X_c.push_back(result[i][0]);
+        Y_c.push_back(result[i][1]);
     }
 
     direction = (Vector2d(result[1][0], result[1][1])
@@ -681,14 +691,20 @@ void Mesh::throw_geodesic_discrete(void) {
             }
         }
 
-        Vector2d point_of_intersection = startpoint + t*direction*(1.+1e-5);
+        Vector2d tmp_plot = startpoint;
+        for(double i = 0;i<t;i+=0.01*t) {
+            tmp_plot += 0.01*t*direction;   
+            X_d.push_back(tmp_plot.x());
+            Y_d.push_back(tmp_plot.y());
+        }
+        Vector2d point_of_intersection = startpoint + t*direction;
         Vector2d ndir;
 
         std::sort(local_edge.begin(), local_edge.end());
 
         if (edge_data[local_edge].size()<2) {
 
-            std::cout << "[WARN] Sad you didn't sample enough boi..."
+            std::cerr << "[WARN] Sad you didn't sample enough boi..."
                 << std::endl;
 
             // TODO: this whole section is a scam
@@ -748,6 +764,7 @@ void Mesh::throw_geodesic_discrete(void) {
         // TODO: Maybe parameterize this 1e-4
         // In earlier implementation, there could be returned multiple neighs
         // We picking the first one here
+        int old_t_id = t_id;
         for (auto neighbour : neighbours[t_id]) {
             if (check_for_incidence(vertices, triangles[neighbour],
                         point_of_intersection, 1e-4)){
@@ -755,6 +772,13 @@ void Mesh::throw_geodesic_discrete(void) {
                 break;
             }
         }
+        if (t_id==old_t_id) {
+            std::cout << "Good boy exit...@" << count_checker << std::endl;
+            break;
+        }
+
+        // DBG to show flow of t_id
+        std::cerr << t_id << std::endl;
 
         startpoint = point_of_intersection;
         this_triangle = triangles[t_id];
@@ -767,4 +791,8 @@ void Mesh::throw_geodesic_discrete(void) {
             break;
         }
     }
+
+    plt::plot(X_c,Y_c, "b-");
+    plt::plot(X_d,Y_d, "r-");
+    plt::show();
 }

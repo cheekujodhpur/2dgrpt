@@ -7,6 +7,7 @@
 */
 
 #include "helpers.hpp"
+#include <iostream>
 
 double grpt::calculate_area(const Vector2d p1, const Vector2d p2, 
         const Vector2d p3) {

@@ -35,6 +35,9 @@ int main(int argc, char **argv) {
         std::cerr << "done." << std::endl;
     }
 
+    myMesh.churn_edge_data();
+
+    std::cout << "Now throwing discrete geodesics..." << std::endl;
     for(int i=0;i<5;i++) {
         myMesh.throw_geodesic_discrete();
     }
