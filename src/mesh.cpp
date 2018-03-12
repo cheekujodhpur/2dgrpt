@@ -16,6 +16,7 @@
 #include <boost/numeric/odeint.hpp>
 
 #define N_CHECKS 5
+#define EPS 1e-10
 
 using namespace grpt;
 
@@ -418,21 +419,21 @@ double Mesh::find_trial_error(const double mod, const double dt,
 
     double t = cross(a-startpoint, b-a)/cross(direction,b-a);
     double s = cross(a-startpoint, direction)/cross(direction, b-a);
-    if (t <= 1 && s >= 0) {
+    if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
         local_edge.push_back(this_triangle[0]);
         local_edge.push_back(this_triangle[1]);
     }
     else {
         t = cross(b-startpoint, c-b)/cross(direction,c-b);
         s = cross(b-startpoint, direction)/cross(direction, c-b);
-        if (t <= 1 && s >= 0) {
+        if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
             local_edge.push_back(this_triangle[1]);
             local_edge.push_back(this_triangle[2]);
         }
         else {
             t = cross(c-startpoint, a-c)/cross(direction,a-c);
             s = cross(c-startpoint, direction)/cross(direction, a-c);
-            if (t <= 1 && s >= 0) {
+            if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
                 local_edge.push_back(this_triangle[2]);
                 local_edge.push_back(this_triangle[0]);
             }
@@ -667,21 +668,21 @@ void Mesh::throw_geodesic_discrete(void) {
 
         double t = cross(a-startpoint, b-a)/cross(direction,b-a);
         double s = cross(a-startpoint, direction)/cross(direction, b-a);
-        if (t <= 1 && s >= 0) {
+        if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
             local_edge.push_back(this_triangle[0]);
             local_edge.push_back(this_triangle[1]);
         }
         else {
             t = cross(b-startpoint, c-b)/cross(direction,c-b);
             s = cross(b-startpoint, direction)/cross(direction, c-b);
-            if (t <= 1 && s >= 0) {
+            if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
                 local_edge.push_back(this_triangle[1]);
                 local_edge.push_back(this_triangle[2]);
             }
             else {
                 t = cross(c-startpoint, a-c)/cross(direction,a-c);
                 s = cross(c-startpoint, direction)/cross(direction, a-c);
-                if (t <= 1 && s >= 0) {
+                if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
                     local_edge.push_back(this_triangle[2]);
                     local_edge.push_back(this_triangle[0]);
                 }
@@ -761,24 +762,24 @@ void Mesh::throw_geodesic_discrete(void) {
         }
 
 
-        // TODO: Maybe parameterize this 1e-4
-        // In earlier implementation, there could be returned multiple neighs
-        // We picking the first one here
-        int old_t_id = t_id;
-        for (auto neighbour : neighbours[t_id]) {
-            if (check_for_incidence(vertices, triangles[neighbour],
-                        point_of_intersection, 1e-4)){
-                t_id = neighbour;
-                break;
-            }
-        }
-        if (t_id==old_t_id) {
+        auto check_edge = [=](int x){
+            std::vector<int> el = triangles[x];
+            return ((std::find(el.begin(), el.end(), local_edge[0])!=el.end())
+                    &&
+                    (std::find(el.begin(), el.end(), local_edge[1])!=el.end())
+                   );
+        };
+        std::vector<int>::iterator it = std::find_if(
+                neighbours[t_id].begin(), 
+                neighbours[t_id].end(),
+                check_edge);
+
+        if (it!= neighbours[t_id].end())
+            t_id = *it;
+        else {
             std::cout << "Good boy exit...@" << count_checker << std::endl;
             break;
         }
-
-        // DBG to show flow of t_id
-        std::cerr << t_id << std::endl;
 
         startpoint = point_of_intersection;
         this_triangle = triangles[t_id];

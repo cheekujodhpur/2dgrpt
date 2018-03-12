@@ -10,7 +10,7 @@
 #include <iostream>
 
 /// Number of samples on each edge
-#define NOS_EDGE 5
+#define NOS_EDGE 20
 
 using namespace grpt;
 

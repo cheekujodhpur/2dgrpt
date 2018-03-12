@@ -35,7 +35,7 @@ MPLIB_INCLUDE=/usr/include/python2.7
 LDFLAGS=-L/usr/local/lib
 
 CPPFLAGS=-I$(MPLIB_INCLUDE) -I$(EIGEN_INCLUDE) -I$(INCDIR)
-CPPFLAGS+=-O3 -Wall -std=c++11
+CPPFLAGS+=-g -O3 -Wall -std=c++11
 
 ######################################
 
