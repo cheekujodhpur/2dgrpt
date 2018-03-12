@@ -556,7 +556,7 @@ void Mesh::throw_geodesic_mark(const int seed, const double tau,
     contradir.normalize();
 
     double one_angle = atan2(contradir.y(), contradir.x());
-    std::cout << "[DBG] Input Angle: " << one_angle*180./M_PI << std::endl;
+    std::cerr << "[DBG] Input Angle: " << one_angle*180./M_PI << std::endl;
     double margin = 0.5;
 
     double result = nelder_mead(one_angle-margin*M_PI, 
@@ -566,11 +566,13 @@ void Mesh::throw_geodesic_mark(const int seed, const double tau,
             margin>=0.2) {
 
         margin = margin-0.1;
-        std::cout <<  "[DBG] Margin reduced to" << margin << std::endl;
+        std::cerr <<  "[DBG] Margin reduced to" << margin << std::endl;
         result = nelder_mead(one_angle-margin*M_PI, one_angle+margin*M_PI, 
                 tau, f_minimizer);
 
-        find_trial_error(result, dt, t_id, startpoint, covdir, true);
+        std::cerr << "[DBG] Saving with error " << 
+            find_trial_error(result, dt, t_id, startpoint, covdir, true) 
+            << std::endl;
     }
 
 }
