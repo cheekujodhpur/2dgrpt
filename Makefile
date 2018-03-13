@@ -32,10 +32,10 @@ EIGEN_INCLUDE=/usr/include/eigen3
 MPLIB_INCLUDE=/usr/include/python2.7
 
 # Compiler and Linker flags
-LDFLAGS=-L/usr/local/lib
+LDFLAGS=-L/usr/local/lib -fopenmp
 
 CPPFLAGS=-I$(MPLIB_INCLUDE) -I$(EIGEN_INCLUDE) -I$(INCDIR)
-CPPFLAGS+=-g -O3 -Wall -std=c++11
+CPPFLAGS+=-g -fopenmp -O3 -Wall -std=c++11
 
 ######################################
 

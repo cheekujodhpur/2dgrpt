@@ -15,7 +15,7 @@
 #include <ctime>
 #include <boost/numeric/odeint.hpp>
 
-#define N_CHECKS 5
+#define N_CHECKS 20
 #define EPS 1e-10
 
 using namespace grpt;
@@ -450,9 +450,12 @@ double Mesh::find_trial_error(const double mod, const double dt,
 
     // Save if flag set
     if (save) {
-        std::sort(local_edge.begin(), local_edge.end());
-        std::vector<Vector2d> tmp = {new_dir-direction, direction};
-        edge_data[local_edge].push_back(tmp);
+#pragma omp critical
+        {
+            std::sort(local_edge.begin(), local_edge.end());
+            std::vector<Vector2d> tmp = {new_dir-direction, direction};
+            edge_data[local_edge].push_back(tmp);
+        }
     }
     
     if (dbg && save) {
