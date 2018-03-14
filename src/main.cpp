@@ -29,6 +29,8 @@ int main(int argc, char **argv) {
     // myMesh.draw();
     // myMesh.find_trial_error(0,0.01,0,Vector2d(0.55,0.13), Vector2d(0.7,0.7));
     
+    myMesh.sample_optimiser(1e-2);
+    /*
 #pragma omp parallel for schedule(dynamic, 1)
     for(int i=0;i<NOS_EDGE*myMesh.get_num_triangles();++i){
         std::cerr <<  "Marking" << i << "..." << std::endl;
@@ -42,6 +44,7 @@ int main(int argc, char **argv) {
     for(int i=0;i<50;i++) {
         myMesh.throw_geodesic_discrete(i);
     }
+    */
 
     return 0;
 }

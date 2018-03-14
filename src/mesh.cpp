@@ -873,3 +873,59 @@ bool Mesh::check_for_incidence(const std::vector<int> triangle,
 
     return true;
 }
+
+void Mesh::sample_optimiser(const double dt) {
+
+    int num_triangle = triangles.size();
+    typedef unsigned short int usint;
+    //triangle_id
+    //int seed = usint(std::time(nullptr));
+    int seed = 18036;
+    int t_id = seed % num_triangle; 
+    std::vector<int> this_triangle = triangles[t_id];
+
+    // Start point randomly chosen
+    Vector2d startpoint = random_point(
+            vertices[this_triangle[0]],
+            vertices[this_triangle[1]],
+            vertices[this_triangle[2]]
+            );
+
+    // Choosing a random direction
+    usint rand_seed[3] = {usint(seed), usint(seed*seed),
+        usint(seed*seed*seed)};
+    Vector2d covdir = Vector2d(erand48(rand_seed), erand48(rand_seed));
+    // Renormalizing
+    covdir.normalize();
+
+    auto f_minimizer = [=](double x)->double{ 
+        return find_trial_error(x, dt, t_id, startpoint, covdir); 
+    };
+
+    Vector2d contradir = covdir;
+    contradir.y() = contradir.y()*startpoint.x();
+    contradir.normalize();
+
+    double one_angle = atan2(contradir.y(), contradir.x());
+    std::cout << "seed: " << seed << std::endl;
+    std::cout << "startpoint: " << startpoint.x() << " " << 
+        startpoint.y() << std::endl;
+    std::cout << "covdir: " << covdir.x() << " " << 
+        covdir.y() << std::endl;
+    std::cout << "one_angle: " << one_angle << std::endl;
+
+    std::string filename = "nelder"+std::to_string(N_CHECKS);
+    std::fstream outfile;
+    outfile.open(filename, std::fstream::out);
+    outfile << "x,f(x)" << std::endl;
+    //double i = 0;
+    double i = 1.517;
+    //double di = 2*M_PI/1000;
+    double di = (1.518-1.517)/1000;
+    //while (i<2*M_PI){
+    while (i<1.518){
+       outfile << i << "," << f_minimizer(i) << std::endl;
+       i += di;
+    }
+    outfile.close();
+}

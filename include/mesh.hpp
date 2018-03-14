@@ -116,6 +116,9 @@ namespace grpt {
                 const Vector2d point_of_intersection, const double threshold,
                 std::vector<int> &local_edge);
 
+        /// Sample from optimiser function
+        void sample_optimiser(const double dt);
+
     };
 
 }
