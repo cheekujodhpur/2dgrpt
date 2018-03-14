@@ -411,34 +411,36 @@ double Mesh::find_trial_error(const double mod, const double dt,
 
     Vector2d direction = (Vector2d(result[1][0], result[1][1]) - startpoint).normalized();
 
-    Vector2d a = vertices[this_triangle[0]];
-    Vector2d b = vertices[this_triangle[1]];
-    Vector2d c = vertices[this_triangle[2]];
-
     std::vector<int> local_edge;
 
-    double t = cross(a-startpoint, b-a)/cross(direction,b-a);
-    double s = cross(a-startpoint, direction)/cross(direction, b-a);
-    if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
-        local_edge.push_back(this_triangle[0]);
-        local_edge.push_back(this_triangle[1]);
-    }
-    else {
-        t = cross(b-startpoint, c-b)/cross(direction,c-b);
-        s = cross(b-startpoint, direction)/cross(direction, c-b);
-        if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
-            local_edge.push_back(this_triangle[1]);
-            local_edge.push_back(this_triangle[2]);
-        }
-        else {
-            t = cross(c-startpoint, a-c)/cross(direction,a-c);
-            s = cross(c-startpoint, direction)/cross(direction, a-c);
-            if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
-                local_edge.push_back(this_triangle[2]);
-                local_edge.push_back(this_triangle[0]);
+    double t;
+    if (!find_intersection(this_triangle, startpoint, 
+                direction, local_edge, t)) {
+        std::cerr << "[warn] segment empty" << std::endl;
+        std::cerr << "trying incidence check..." << std::endl;
+        if (!check_for_incidence(this_triangle, startpoint, 1e-4, local_edge)) {
+            std::cerr << "[warn] incidence check failed too" << std::endl;
+            std::cerr << "checking neighbours..." << std::endl;
+            bool lflag = false;
+            for (auto neighbour : neighbours[t_id]) {
+                if (find_intersection(triangles[neighbour], startpoint, 
+                            direction, local_edge, t)) {
+                    std::cerr << "found something on neighbours..." << std::endl;
+                    lflag = true;
+                    break;
+                }
             }
-            else {
-                std::cout << "[WARN] Segment empty" << std::endl;
+            if (!lflag) {
+                for (auto neighbour : neighbours[t_id]) {
+                    if (check_for_incidence(triangles[neighbour], startpoint, 1e-4, 
+                                local_edge)) {
+                        std::cerr << "found something on neighbours..." << std::endl;
+                        lflag = true;
+                        break;
+                    }
+                }
+                if(!lflag)
+                    std::cerr << "[warn] nothing on neighbours either" << std::endl;
             }
         }
     }
@@ -582,7 +584,7 @@ void Mesh::throw_geodesic_mark(const int seed, const double tau,
 
 }
 
-void Mesh::throw_geodesic_discrete(void) {
+void Mesh::throw_geodesic_discrete(int seed) {
 
     // Arrangements for plotting
     namespace plt = matplotlibcpp;
@@ -592,7 +594,7 @@ void Mesh::throw_geodesic_discrete(void) {
 
     int num_triangle = triangles.size();
     typedef unsigned short int usint;
-    usint rand_seed[3] = {0, usint(12021997), usint(std::time(nullptr))};
+    usint rand_seed[3] = {usint(seed), usint(12021997), usint(std::time(nullptr))};
     // triangle id
     int t_id = int(erand48(rand_seed)*num_triangle);
     std::vector<int> this_triangle = triangles[t_id];
@@ -663,36 +665,44 @@ void Mesh::throw_geodesic_discrete(void) {
     int count_checker = 0;
     while(true) {
 
-        Vector2d a = vertices[this_triangle[0]];
-        Vector2d b = vertices[this_triangle[1]];
-        Vector2d c = vertices[this_triangle[2]];
-
         std::vector<int> local_edge;
 
-        double t = cross(a-startpoint, b-a)/cross(direction,b-a);
-        double s = cross(a-startpoint, direction)/cross(direction, b-a);
-        if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
-            local_edge.push_back(this_triangle[0]);
-            local_edge.push_back(this_triangle[1]);
+        double t;
+        if (!find_intersection(this_triangle, startpoint, 
+                    direction, local_edge, t)) {
+            std::cerr << "[warn] segment empty" << std::endl;
+            std::cerr << "trying incidence check..." << std::endl;
+            if (!check_for_incidence(this_triangle, startpoint, 1e-4, local_edge)) {
+                std::cerr << "[warn] incidence check failed too" << std::endl;
+                std::cerr << "checking neighbours..." << std::endl;
+                bool lflag = false;
+                for (auto neighbour : neighbours[t_id]) {
+                    if (find_intersection(triangles[neighbour], startpoint, 
+                                direction, local_edge, t)) {
+                        std::cerr << "found something on neighbours..." << std::endl;
+                        lflag = true;
+                        break;
+                    }
+                }
+                if (!lflag) {
+                    for (auto neighbour : neighbours[t_id]) {
+                        if (check_for_incidence(triangles[neighbour], startpoint, 
+                                    1e-4, local_edge)) {
+                            std::cerr << "found something on neighbours..." 
+                                      << std::endl;
+                            lflag = true;
+                            break;
+                        }
+                    }
+                    if(!lflag)
+                        std::cerr << "[warn] nothing on neighbours either" 
+                                  << std::endl;
+                }
+            }
         }
-        else {
-            t = cross(b-startpoint, c-b)/cross(direction,c-b);
-            s = cross(b-startpoint, direction)/cross(direction, c-b);
-            if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
-                local_edge.push_back(this_triangle[1]);
-                local_edge.push_back(this_triangle[2]);
-            }
-            else {
-                t = cross(c-startpoint, a-c)/cross(direction,a-c);
-                s = cross(c-startpoint, direction)/cross(direction, a-c);
-                if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
-                    local_edge.push_back(this_triangle[2]);
-                    local_edge.push_back(this_triangle[0]);
-                }
-                else {
-                    std::cout << "[WARN] Segment empty" << std::endl;
-                }
-            }
+        if(!local_edge.size()) {
+            std::cout << "Bad boy exit...@" << count_checker << std::endl;
+            break;
         }
 
         Vector2d tmp_plot = startpoint;
@@ -796,7 +806,70 @@ void Mesh::throw_geodesic_discrete(void) {
         }
     }
 
-    plt::plot(X_c,Y_c, "b-");
-    plt::plot(X_d,Y_d, "r-");
-    plt::show();
+    // plt::plot(X_c,Y_c, "b-");
+    // plt::plot(X_d,Y_d, "r-");
+    // plt::show();
+}
+
+bool Mesh::find_intersection(std::vector<int> this_triangle, Vector2d startpoint, 
+        Vector2d direction, std::vector<int> &local_edge, double &t) {
+
+    Vector2d a = vertices[this_triangle[0]];
+    Vector2d b = vertices[this_triangle[1]];
+    Vector2d c = vertices[this_triangle[2]];
+
+    t = cross(a-startpoint, b-a)/cross(direction,b-a);
+    double s = cross(a-startpoint, direction)/cross(direction, b-a);
+    if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
+        local_edge.push_back(this_triangle[0]);
+        local_edge.push_back(this_triangle[1]);
+    }
+    else {
+        t = cross(b-startpoint, c-b)/cross(direction,c-b);
+        s = cross(b-startpoint, direction)/cross(direction, c-b);
+        if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
+            local_edge.push_back(this_triangle[1]);
+            local_edge.push_back(this_triangle[2]);
+        }
+        else {
+            t = cross(c-startpoint, a-c)/cross(direction,a-c);
+            s = cross(c-startpoint, direction)/cross(direction, a-c);
+            if (EPS <= t && t <= 1 && EPS <= s && s <= 1) {
+                local_edge.push_back(this_triangle[2]);
+                local_edge.push_back(this_triangle[0]);
+            }
+            else {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool Mesh::check_for_incidence(const std::vector<int> triangle, 
+        const Vector2d point_of_intersection, const double threshold,
+        std::vector<int> &local_edge) {
+
+    Vector2d a = vertices[triangle[0]];
+    Vector2d b = vertices[triangle[1]];
+    Vector2d c = vertices[triangle[2]];
+
+    Vector2d pos = point_of_intersection;
+
+    if( fabs((pos-a).norm() + (pos-b).norm() - (a-b).norm()) < threshold ) {
+        local_edge.push_back(triangle[0]);
+        local_edge.push_back(triangle[1]);
+    }
+    else if( fabs((pos-b).norm() + (pos-c).norm() - (b-c).norm()) < threshold ) {
+        local_edge.push_back(triangle[1]);
+        local_edge.push_back(triangle[2]);
+    }
+    else if( fabs((pos-c).norm() + (pos-a).norm() - (c-a).norm()) < threshold ) {
+        local_edge.push_back(triangle[2]);
+        local_edge.push_back(triangle[0]);
+    }
+    else
+        return false;
+
+    return true;
 }

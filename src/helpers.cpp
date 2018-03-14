@@ -29,28 +29,6 @@ Vector2d grpt::random_point(const Vector2d p1, const Vector2d p2, const Vector2d
     return (p1*c1 + p2*c2 + p3*c3)/(c1+c2+c3);
 }
 
-
-bool grpt::check_for_incidence(const std::vector<Vector2d> vertices, 
-        const std::vector<int> triangle, 
-        const Vector2d point_of_intersection, const double threshold) {
-
-    Vector2d a = vertices[triangle[0]];
-    Vector2d b = vertices[triangle[1]];
-    Vector2d c = vertices[triangle[2]];
-
-    Vector2d pos = point_of_intersection;
-
-    if( fabs((pos-a).norm() + (pos-b).norm() - (a-b).norm()) < threshold ) 
-        return true;
-    else if( fabs((pos-b).norm() + (pos-c).norm() - (b-c).norm()) < threshold ) 
-        return true;
-    else if( fabs((pos-c).norm() + (pos-a).norm() - (c-a).norm()) < threshold ) 
-        return true;
-
-    return false;
-}
-
-
 double grpt::return_incidence(const std::vector<Vector2d> vertices, 
         const std::vector<int> triangle, 
         const Vector2d point_of_intersection) {

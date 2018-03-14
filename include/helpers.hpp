@@ -77,11 +77,6 @@ namespace grpt{
     Vector2d random_point(const Vector2d p1, const Vector2d p2, 
             const Vector2d p3);
 
-    /// Check if a point lies on a given triangle or not
-    bool check_for_incidence(const std::vector<Vector2d> vertices, 
-            const std::vector<int> triangle,
-            const Vector2d point_of_intersection, const double threshold);
-
     /// Return the distance from the closest edge in a triangle
     double return_incidence(const std::vector<Vector2d> vertices, 
             const std::vector<int> triangle,

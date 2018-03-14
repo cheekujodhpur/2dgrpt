@@ -104,7 +104,18 @@ namespace grpt {
                 double dt=0.01);
 
         /// Actually throw a discrete geodesic to check state
-        void throw_geodesic_discrete(void);
+        void throw_geodesic_discrete(int seed);
+
+
+        /// Some helper functions
+        bool find_intersection(std::vector<int> this_triangle, Vector2d startpoint, 
+                Vector2d direction, std::vector<int> &local_edge, double &t);
+        
+        /// Check if a point lies on a given triangle or not
+        bool check_for_incidence(const std::vector<int> triangle,
+                const Vector2d point_of_intersection, const double threshold,
+                std::vector<int> &local_edge);
+
     };
 
 }
