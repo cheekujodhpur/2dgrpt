@@ -514,21 +514,15 @@ double Mesh::find_trial_error(const double mod, const double dt,
     }
 
 
-    // Compare target angle versus calculated angle
-    Vector2d targetf(result[result.size()-1][0], result[result.size()-1][1]);
-    Vector2d targeti(result[0][0], result[0][1]);
+    double cumulative_error = 0.0;
+    int max_iter = std::min(result.size(), dev_result.size());
+    for(int i = 0;i<max_iter;++i){
+        Vector2d x = Vector2d(result[i][0], result[i][1])-
+                     Vector2d(dev_result[i][0], dev_result[i][1]);
 
-    Vector2d target = targetf-targeti;
-    double target_angle = atan2(target.y(), target.x());
-
-    Vector2d calcuf(dev_result[dev_result.size()-1][0], 
-            dev_result[dev_result.size()-1][1]);
-    Vector2d calcui(dev_result[0][0], dev_result[0][1]);
-
-    Vector2d calcu = calcuf-calcui;
-    double calcu_angle = atan2(calcu.y(), calcu.x());
-
-    return fabs(target_angle-calcu_angle);
+        cumulative_error += pow(x.norm(),2);
+    }
+    return sqrt(cumulative_error);
 }
 
 void Mesh::throw_geodesic_mark(const int seed, const double tau, 
