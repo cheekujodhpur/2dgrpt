@@ -744,7 +744,7 @@ void Mesh::throw_geodesic_discrete(int seed) {
 
         if (edge_data[local_edge].size()<2) {
 
-            std::cerr << "[WARN] Sad you didn't sample enough boi..."
+            std::cout << "[WARN] Sad you didn't sample enough boi..."
                 << std::endl;
 
             // TODO: this whole section is a scam
