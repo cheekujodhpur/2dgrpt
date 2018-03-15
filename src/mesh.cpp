@@ -547,20 +547,46 @@ void Mesh::throw_geodesic_mark(const int seed, const double tau,
             );
 
     // Choosing a random direction
+    /*
+     * Create three directions, randomly choosing a point on three edges
+     * Choose randomly among these three directions
+     * This will be contradir by the way
+     * we now will need to construct the covdir the other way round
+     */
     typedef unsigned short int usint;
     usint rand_seed[3] = {usint(seed), usint(seed*seed),
         usint(seed*seed*seed)};
-    Vector2d covdir = Vector2d(erand48(rand_seed), erand48(rand_seed));
+
+    double r1 = erand48(rand_seed), r2=erand48(rand_seed), 
+           r3 = erand48(rand_seed);
+    Vector2d tmp = r1*vertices[this_triangle[0]] +
+               (1-r1)*vertices[this_triangle[1]];
+    Vector2d dir1 = tmp-startpoint;
+
+    tmp = r2*vertices[this_triangle[1]] +
+        (1-r2)*vertices[this_triangle[2]];
+    Vector2d dir2 = tmp-startpoint;
+
+    tmp = r3*vertices[this_triangle[2]] +
+        (1-r3)*vertices[this_triangle[0]];
+    Vector2d dir3 = tmp-startpoint;
+
+    Vector2d contradir;
+    double rr_eta = erand48(rand_seed);
+    if (rr_eta < 0.33) contradir = dir1;
+    else if (rr_eta < 0.67) contradir = dir2;
+    else contradir = dir3;
+
+    contradir.normalize();
+
+    Vector2d covdir = contradir;
+    covdir.y() = covdir.y()*startpoint.x();
     // Renormalizing
     covdir.normalize();
 
     auto f_minimizer = [=](double x)->double{ 
         return find_trial_error(x, dt, t_id, startpoint, covdir); 
     };
-
-    Vector2d contradir = covdir;
-    contradir.y() = contradir.y()*startpoint.x();
-    contradir.normalize();
 
     double one_angle = atan2(contradir.y(), contradir.x());
     std::cerr << "[DBG] Input Angle: " << one_angle*180./M_PI << std::endl;
@@ -806,9 +832,9 @@ void Mesh::throw_geodesic_discrete(int seed) {
         }
     }
 
-    // plt::plot(X_c,Y_c, "b-");
-    // plt::plot(X_d,Y_d, "r-");
-    // plt::show();
+    plt::plot(X_c,Y_c, "b-");
+    plt::plot(X_d,Y_d, "r-");
+    plt::show();
 }
 
 bool Mesh::find_intersection(std::vector<int> this_triangle, Vector2d startpoint, 
