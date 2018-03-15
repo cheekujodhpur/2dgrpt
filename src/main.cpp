@@ -10,7 +10,7 @@
 #include <iostream>
 
 /// Number of samples on each edge
-#define NOS_EDGE 20
+#define NOS_EDGE 25
 
 using namespace grpt;
 
@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
     // myMesh.find_trial_error(0,0.01,0,Vector2d(0.55,0.13), Vector2d(0.7,0.7));
     
 #pragma omp parallel for schedule(dynamic, 1)
-    for(int i=0;i<NOS_EDGE*myMesh.get_num_triangles();++i){
+    for(int i=0;i<NOS_EDGE*3*myMesh.get_num_triangles();++i){
         std::cerr <<  "Marking" << i << "..." << std::endl;
         myMesh.throw_geodesic_mark(i, 1e-4, 1e-2);
         std::cerr << "done." << std::endl;
